@@ -1,5 +1,6 @@
 Django>=1.8,<1.9
 djangorestframework>=3.4,<3.5
+django-codemirror-widget>=0.4,<0.5
 
 flake8>=3.0,<3.1
 

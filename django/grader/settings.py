@@ -134,3 +134,7 @@ REST_FRAMEWORK = {
 }
 
 LOGIN_URL = '/login'
+
+# CUSTOM
+CODEMIRROR_PATH = 'codemirror'
+CODEMIRROR_MODE = 'python'
