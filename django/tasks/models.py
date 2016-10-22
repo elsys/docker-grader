@@ -1,20 +1,33 @@
+import os
+import uuid
+
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 from authentication.models import User
 
 
 class Task(models.Model):
-    pass
+    slug = models.SlugField(max_length=31, unique=True)
+    docker_image = models.CharField(max_length=255)
+
+    def get_task_dir(self):
+        return os.path.join(settings.GRADER_SUBMISSIONS_DIR, self.slug)
 
 
 class TaskStep(models.Model):
+    order = models.PositiveSmallIntegerField()
     task = models.ForeignKey(Task, related_name='steps')
+
+    input_source = models.TextField()
+    output_source = models.TextField()
 
 
 class TaskSubmission(models.Model):
     task = models.ForeignKey(Task, related_name='submissions')
-    user = models.ForeignKey(User, related_name='submissions')
+    user = models.ForeignKey(User, null=True, related_name='submissions')
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
 
 
 class TaskLog(models.Model):

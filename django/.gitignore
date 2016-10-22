@@ -1,4 +1,5 @@
 *.py[co]
 /logs/
+/submissions/
 /.cache/
 *.sqlite3
