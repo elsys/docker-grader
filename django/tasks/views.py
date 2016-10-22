@@ -36,8 +36,8 @@ class TaskView(View):
         task_dir = task.get_task_dir()
         os.makedirs(task_dir, mode=0o2777, exist_ok=True)
 
-        submission = TaskSubmission(task=task, user=None)
-        file_dir = os.path.join(task_dir, str(submission.uuid))
+        submission = TaskSubmission.objects.create(task=task, user=None)
+        file_dir = submission.get_submission_path()
 
         with open(file_dir, 'wb+') as destination:
             for chunk in f.chunks():
