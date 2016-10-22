@@ -6,7 +6,7 @@ from docker import Client
 
 @shared_task
 def grade(filename):
-    runner = TaskRunner("gcc:latest", "/home/nikidimi/hello.c")
+    runner = TaskRunner("gcc:latest", filename)
     runner.exec_step("gcc -x c /mnt/input")
     res = runner.exec_step("./a.out")
     return res
