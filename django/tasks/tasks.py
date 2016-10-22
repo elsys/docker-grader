@@ -1,9 +1,32 @@
 from __future__ import absolute_import
 
 from celery import shared_task
+from docker import Client
 
 
 @shared_task
-def add(x, y):
-    return x + y
+def grade(filename):
+    runner = TaskRunner("gcc:lastest", "/home/nikidimi/hello.c")
+    runner.exec_step("gcc -x c /mnt/input")
+    res = runner.exec_step("./a.out")
+    return res
 
+
+class TaskRunner:
+    def __init__(self, docker_image, input_file):
+        self.cli = Client(base_url='unix://var/run/docker.sock')
+        self.container = self.cli.create_container(
+            image='gcc:latest',
+            command='/bin/bash',
+            stdin_open=True,
+            host_config=self.cli.create_host_config(binds=[
+                '/home/nikidimi/hello.c:/mnt/input'
+            ])
+        )
+        self.cli.start(self.container)
+
+    def exec_step(self, command):
+        ex = self.cli.exec_create(container=self.container,
+                                  cmd=command, stdout=True, stderr=True)
+        res = self.cli.exec_start(ex)
+        return res
