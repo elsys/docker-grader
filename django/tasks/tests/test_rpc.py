@@ -2,7 +2,7 @@ from tasks import rpc
 
 TEST_INPUT_COMMAND_SOURCE = """
 command = "blabla"
-state_out = state_in * 15
+state = state * 15
 """
 
 
@@ -14,8 +14,8 @@ def test_prepare_input_command():
 
 TEST_OUTPUT_PARSING_SOURCE = """
 output_msg = "blabla"
-grade = state_in * status_code
-state_out = 2 * grade
+grade = state * status_code
+state = 2 * grade
 exec_next_step = True
 """
 
@@ -40,7 +40,7 @@ def test_prepare_input_command_no_state():
 
 TEST_OUTPUT_NO_STATE_SOURCE = """
 output_msg = "blabla"
-grade = state_in * status_code
+grade = state * status_code
 exec_next_step = True
 """
 
