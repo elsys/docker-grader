@@ -13,10 +13,10 @@ HELLO_C_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "hello.
 
 
 def test_docker_gcc():
-    runner = tasks.TaskRunner("gcc:latest", HELLO_C_PATH)
-    runner.exec_step("gcc -x c /mnt/input")
-    result = runner.exec_step("./a.out")
-    assert result.decode("utf8") == "hello world\n"
+    with tasks.TaskRunner("gcc:latest", HELLO_C_PATH) as runner:
+        runner.exec_step("gcc -x c /mnt/input")
+        result = runner.exec_step("./a.out")
+        assert result.decode("utf8") == "hello world\n"
 
 
 TEST_OUTPUT_PARSING_SOURCE = """
@@ -28,13 +28,13 @@ exec_next_step = True
 
 
 def test_docker_python_rpc():
-    tasks.GradingStepsRunner()
-    s = xmlrpc.client.ServerProxy('http://localhost:7799')
-    result = s.parse_output(TEST_OUTPUT_PARSING_SOURCE, 2, "stdout", "stderr", 15)
-    assert result["state"] == 60
-    assert result["grade"] == 30
-    assert result["output_msg"] == "blabla"
-    assert result["exec_next_step"]
+    with tasks.GradingStepsRunner():
+        s = xmlrpc.client.ServerProxy('http://localhost:7799')
+        result = s.parse_output(TEST_OUTPUT_PARSING_SOURCE, 2, "stdout", "stderr", 15)
+        assert result["state"] == 60
+        assert result["grade"] == 30
+        assert result["output_msg"] == "blabla"
+        assert result["exec_next_step"]
 
 
 @pytest.mark.django_db

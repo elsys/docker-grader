@@ -9,11 +9,11 @@ from tasks.models import TaskSubmission
 def grade(submission_id):
     submission = TaskSubmission.objects.get(pk=submission_id)
 
-    runner = TaskRunner(submission.task.docker_image, submission.get_submission_path())
-    res = ""
-    for step in submission.task.steps.order_by("order"):
-        res = runner.exec_step(step.input_source)
-        print(res)
+    with TaskRunner(submission.task.docker_image, submission.get_submission_path()) as runner:
+        res = ""
+        for step in submission.task.steps.order_by("order"):
+            res = runner.exec_step(step.input_source)
+            print(res)
     return res
 
 
@@ -29,6 +29,16 @@ class DockerRunner:
             ])
         )
         self.cli.start(self.container)
+
+    def stop(self):
+        self.cli.stop(self.container)
+        self.cli.remove_container(self.container)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop()
 
 
 class TaskRunner(DockerRunner):
