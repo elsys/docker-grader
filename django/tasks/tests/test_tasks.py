@@ -39,20 +39,33 @@ def test_docker_python_rpc():
         assert result["exec_next_step"]
 
 
-@pytest.mark.django_db
-@override_settings(CELERY_ALWAYS_EAGER=True)
-def test_queue():
+@pytest.fixture
+def generate_task_submission(db):
     task = Task.objects.create(docker_image="gcc:latest", slug="test_task")
     user = User.objects.create()
-    TaskStep.objects.create(task=task, input_source="gcc -x c /mnt/input", order=1)
-    TaskStep.objects.create(task=task, input_source="./a.out", order=2)
+    TaskStep.objects.create(task=task,
+                            input_source="command = \"gcc -x c /mnt/input\"",
+                            output_source="",
+                            order=1)
+    TaskStep.objects.create(task=task,
+                            input_source="command = \"./a.out\"",
+                            output_source="state = stdout",
+                            order=2)
     taskSubmission = TaskSubmission.objects.create(task=task, user=user)
 
     if not os.path.exists(task.get_task_dir()):
         os.mkdir(task.get_task_dir())
     copyfile(HELLO_C_PATH, taskSubmission.get_submission_path())
-
-    result = tasks.grade.delay(taskSubmission.id)
-
+    yield taskSubmission.id
     os.remove(taskSubmission.get_submission_path())
-    assert result.get().decode("utf8") == "hello world\n"
+
+
+def test_grade(generate_task_submission):
+    result = tasks.grade(generate_task_submission)
+    assert result == "hello world\n"
+
+
+@override_settings(CELERY_ALWAYS_EAGER=True)
+def test_grade_with_queue(generate_task_submission):
+    result = tasks.grade.delay(generate_task_submission)
+    assert result.get() == "hello world\n"

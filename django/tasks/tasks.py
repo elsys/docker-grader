@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
 import os
+import xmlrpc.client
+import time
 from celery import shared_task
 from docker import Client
 from tasks.models import TaskSubmission
@@ -10,13 +12,18 @@ from django.conf import settings
 @shared_task
 def grade(submission_id):
     submission = TaskSubmission.objects.get(pk=submission_id)
+    state = "/mnt/input"
 
     with GradingStepsRunner(), TaskRunner(submission.task.docker_image, submission.get_submission_path()) as runner:
-        res = ""
+        rpc = xmlrpc.client.ServerProxy('http://localhost:7799')
+        time.sleep(2)
+
         for step in submission.task.steps.order_by("order"):
-            res = runner.exec_step(step.input_source)
-            print(res)
-    return res
+            input_result = rpc.prepare_input_command(step.input_source, state)
+            execution_result = runner.exec_step(input_result["command"]).decode("utf8")
+            output_result = rpc.parse_output(step.output_source, input_result["state"], execution_result, "", 0)
+            state = output_result["state"]
+    return state
 
 
 class DockerRunner:
