@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 
+import os
 from celery import shared_task
 from docker import Client
 from tasks.models import TaskSubmission
+from django.conf import settings
 
 
 @shared_task
@@ -61,7 +63,11 @@ class GradingStepsRunner(DockerRunner):
             stdin_open=True,
             ports=[8000],
             host_config=self.cli.create_host_config(
-                binds=["/home/nikidimi/Tues/docker-grader/django/tasks/rpc.py:/mnt/input"],
+                binds=[self.get_python_rpc_source_path() + ":/mnt/input"],
                 port_bindings={8000:7799}
             )
         )
+
+    @staticmethod    
+    def get_python_rpc_source_path():
+        return os.path.join(settings.BASE_DIR, "tasks", "rpc.py")
