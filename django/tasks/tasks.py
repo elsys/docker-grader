@@ -64,10 +64,10 @@ class GradingStepsRunner(DockerRunner):
             ports=[8000],
             host_config=self.cli.create_host_config(
                 binds=[self.get_python_rpc_source_path() + ":/mnt/input"],
-                port_bindings={8000:7799}
+                port_bindings={8000: 7799}
             )
         )
 
-    @staticmethod    
+    @staticmethod
     def get_python_rpc_source_path():
         return os.path.join(settings.BASE_DIR, "tasks", "rpc.py")
