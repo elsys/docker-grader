@@ -9,7 +9,7 @@ from tasks.models import TaskSubmission
 def grade(submission_id):
     submission = TaskSubmission.objects.get(pk=submission_id)
 
-    with TaskRunner(submission.task.docker_image, submission.get_submission_path()) as runner:
+    with GradingStepsRunner(), TaskRunner(submission.task.docker_image, submission.get_submission_path()) as runner:
         res = ""
         for step in submission.task.steps.order_by("order"):
             res = runner.exec_step(step.input_source)
@@ -18,25 +18,15 @@ def grade(submission_id):
 
 
 class DockerRunner:
-    def __init__(self, docker_image, input_file, command):
+    def __init__(self):
         self.cli = Client(base_url="unix://var/run/docker.sock")
-        self.container = self.cli.create_container(
-            image=docker_image,
-            command=command,
-            stdin_open=True,
-            ports=[8000],
-            host_config=self.cli.create_host_config(
-                binds=[input_file + ":/mnt/input"],
-                port_bindings={8000:7799}
-            )
-        )
-        self.cli.start(self.container)
 
     def stop(self):
         self.cli.stop(self.container)
         self.cli.remove_container(self.container)
 
     def __enter__(self):
+        self.cli.start(self.container)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -45,7 +35,15 @@ class DockerRunner:
 
 class TaskRunner(DockerRunner):
     def __init__(self, docker_image, input_file):
-        DockerRunner.__init__(self, docker_image, input_file, "/bin/bash")
+        DockerRunner.__init__(self)
+        self.container = self.cli.create_container(
+            image=docker_image,
+            command="/bin/bash",
+            stdin_open=True,
+            host_config=self.cli.create_host_config(
+                binds=[input_file + ":/mnt/input"],
+            )
+        )
 
     def exec_step(self, command):
         ex = self.cli.exec_create(container=self.container,
@@ -56,4 +54,14 @@ class TaskRunner(DockerRunner):
 
 class GradingStepsRunner(DockerRunner):
     def __init__(self):
-        DockerRunner.__init__(self, "python:latest", "/home/nikidimi/Tues/docker-grader/django/tasks/rpc.py", "python /mnt/input")
+        DockerRunner.__init__(self)
+        self.container = self.cli.create_container(
+            image="python:latest",
+            command="python /mnt/input",
+            stdin_open=True,
+            ports=[8000],
+            host_config=self.cli.create_host_config(
+                binds=["/home/nikidimi/Tues/docker-grader/django/tasks/rpc.py:/mnt/input"],
+                port_bindings={8000:7799}
+            )
+        )
