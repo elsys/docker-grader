@@ -16,7 +16,7 @@ def grade(submission_id):
 
     with GradingStepsRunner(), TaskRunner(submission.task.docker_image, submission.get_submission_path()) as runner:
         rpc = xmlrpc.client.ServerProxy('http://localhost:7799')
-        time.sleep(2)
+        time.sleep(1)
 
         for step in submission.task.steps.order_by("order"):
             input_result = rpc.prepare_input_command(step.input_source, state)
@@ -31,6 +31,7 @@ class DockerRunner:
         self.cli = Client(base_url="unix://var/run/docker.sock")
 
     def stop(self):
+        self.cli.kill(self.container)
         self.cli.stop(self.container)
         self.cli.remove_container(self.container)
 
