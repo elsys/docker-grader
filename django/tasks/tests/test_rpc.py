@@ -50,3 +50,10 @@ def test_parse_output_no_state():
     assert result["grade"] == 30
     assert result["output_msg"] == "blabla"
     assert result["exec_next_step"]
+
+
+def test_parse_output_defaults():
+    result = rpc.parse_output("", 2, "stdout", "stderr", 15)
+    assert result["grade"] == 0
+    assert result["output_msg"] == ""
+    assert result["exec_next_step"]

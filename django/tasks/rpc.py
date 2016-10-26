@@ -8,7 +8,13 @@ def prepare_input_command(src, state):
 
 
 def parse_output(src, state, stdout, stderr, status_code):
-    scope = {"state": state, "stdout": stdout, "stderr": stderr, "status_code": status_code}
+    scope = {"state": state,
+             "stdout": stdout,
+             "stderr": stderr,
+             "status_code": status_code,
+             "grade": 0,
+             "output_msg": "",
+             "exec_next_step": True}
     exec(src, scope, scope)
     return {"state": scope["state"],
             "grade": scope["grade"],
