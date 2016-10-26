@@ -24,9 +24,11 @@ class DockerRunner:
             image=docker_image,
             command=command,
             stdin_open=True,
-            host_config=self.cli.create_host_config(binds=[
-                input_file + ":/mnt/input"
-            ])
+            ports=[8000],
+            host_config=self.cli.create_host_config(
+                binds=[input_file + ":/mnt/input"],
+                port_bindings={8000:7799}
+            )
         )
         self.cli.start(self.container)
 
@@ -54,4 +56,4 @@ class TaskRunner(DockerRunner):
 
 class GradingStepsRunner(DockerRunner):
     def __init__(self):
-        DockerRunner.__init__(self, "python:latest", "rpc.py", "python /mnt/input")
+        DockerRunner.__init__(self, "python:latest", "/home/nikidimi/Tues/docker-grader/django/tasks/rpc.py", "python /mnt/input")

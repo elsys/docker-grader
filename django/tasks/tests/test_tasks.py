@@ -1,5 +1,6 @@
 import os
 import pytest
+import time
 
 from tasks import tasks
 from django.test.utils import override_settings
@@ -29,6 +30,7 @@ exec_next_step = True
 
 def test_docker_python_rpc():
     with tasks.GradingStepsRunner():
+        time.sleep(5)
         s = xmlrpc.client.ServerProxy('http://localhost:7799')
         result = s.parse_output(TEST_OUTPUT_PARSING_SOURCE, 2, "stdout", "stderr", 15)
         assert result["state"] == 60
