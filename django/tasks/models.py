@@ -28,6 +28,7 @@ class TaskSubmission(models.Model):
     task = models.ForeignKey(Task, related_name='submissions')
     user = models.ForeignKey(User, null=True, related_name='submissions')
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    grade = models.FloatField(default=0)
 
     def get_submission_path(self):
         return os.path.join(self.task.get_task_dir(), str(self.uuid))
@@ -35,12 +36,16 @@ class TaskSubmission(models.Model):
 
 class TaskLog(models.Model):
     class LOG_TYPE:
-        SUBMIT = 'SUBMIT'
-        CANCEL = 'CANCEL'
+        SUBMITTED = 'SUBMITTED'
+        CANCELED = 'CANCELED'
+        STEP_COMPLETED = 'STEP_COMPLETED'
+        STEP_FAILED = 'STEP_FAILED'
 
     DJANGO_LOG_TYPES = (
-        (LOG_TYPE.SUBMIT, 'Submit'),
-        (LOG_TYPE.CANCEL, 'Canel'),
+        (LOG_TYPE.SUBMITTED, 'Submitted'),
+        (LOG_TYPE.CANCELED, 'Canceled'),
+        (LOG_TYPE.STEP_COMPLETED, 'Step completed'),
+        (LOG_TYPE.STEP_FAILED, 'Step failed'),
     )
     LOG_TYPES = tuple(c[0] for c in DJANGO_LOG_TYPES)
 

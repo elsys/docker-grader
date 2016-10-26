@@ -5,7 +5,7 @@ import xmlrpc.client
 import time
 from celery import shared_task
 from docker import Client
-from tasks.models import TaskSubmission
+from tasks.models import TaskSubmission, TaskLog
 from django.conf import settings
 
 
@@ -13,6 +13,7 @@ from django.conf import settings
 def grade(submission_id):
     submission = TaskSubmission.objects.get(pk=submission_id)
     state = "/mnt/input"
+    grade = 0
 
     with GradingStepsRunner(), TaskRunner(submission.task.docker_image, submission.get_submission_path()) as runner:
         rpc = xmlrpc.client.ServerProxy('http://localhost:7799')
@@ -23,6 +24,12 @@ def grade(submission_id):
             execution_result = runner.exec_step(input_result["command"]).decode("utf8")
             output_result = rpc.parse_output(step.output_source, input_result["state"], execution_result, "", 0)
             state = output_result["state"]
+            grade = output_result["grade"]
+            TaskLog.objects.create(task_submission=submission,
+                                   action=TaskLog.LOG_TYPE.STEP_COMPLETED,
+                                   extra=output_result["output_msg"])
+    submission.grade = grade
+    submission.save()
     return state
 
 

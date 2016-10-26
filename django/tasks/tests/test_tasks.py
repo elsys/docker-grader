@@ -4,7 +4,7 @@ import time
 
 from tasks import tasks
 from django.test.utils import override_settings
-from tasks.models import Task, TaskSubmission, TaskStep
+from tasks.models import Task, TaskSubmission, TaskStep, TaskLog
 from authentication.models import User
 from shutil import copyfile
 import xmlrpc.client
@@ -49,7 +49,7 @@ def generate_task_submission(db):
                             order=1)
     TaskStep.objects.create(task=task,
                             input_source="command = \"./a.out\"",
-                            output_source="state = stdout",
+                            output_source="state = stdout; grade=150",
                             order=2)
     taskSubmission = TaskSubmission.objects.create(task=task, user=user)
 
@@ -63,9 +63,25 @@ def generate_task_submission(db):
 def test_grade(generate_task_submission):
     result = tasks.grade(generate_task_submission)
     assert result == "hello world\n"
+    submission = TaskSubmission.objects.get(pk=generate_task_submission)
+    assert abs(submission.grade - 150) < 0.0001
+    count = 0
+    for log_entry in submission.log.all():
+        assert log_entry.action == TaskLog.LOG_TYPE.STEP_COMPLETED
+        assert log_entry.date
+        count = count + 1
+    assert count == 2
 
 
 @override_settings(CELERY_ALWAYS_EAGER=True)
 def test_grade_with_queue(generate_task_submission):
     result = tasks.grade.delay(generate_task_submission)
     assert result.get() == "hello world\n"
+    submission = TaskSubmission.objects.get(pk=generate_task_submission)
+    assert abs(submission.grade - 150) < 0.0001
+    count = 0
+    for log_entry in submission.log.all():
+        assert log_entry.action == TaskLog.LOG_TYPE.STEP_COMPLETED
+        assert log_entry.date
+        count = count + 1
+    assert count == 2
