@@ -9,6 +9,7 @@ from .models import Task
 from .models import TaskSubmission
 
 from .forms import TaskForm
+from tasks import tasks
 
 
 class TaskView(View):
@@ -42,3 +43,5 @@ class TaskView(View):
         with open(file_dir, 'wb+') as destination:
             for chunk in f.chunks():
                 destination.write(chunk)
+
+        tasks.grade.delay(submission.id)
