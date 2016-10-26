@@ -17,18 +17,23 @@ def grade(submission_id):
     return res
 
 
-class TaskRunner:
-    def __init__(self, docker_image, input_file):
-        self.cli = Client(base_url='unix://var/run/docker.sock')
+class DockerRunner:
+    def __init__(self, docker_image, input_file, command):
+        self.cli = Client(base_url="unix://var/run/docker.sock")
         self.container = self.cli.create_container(
             image=docker_image,
-            command='/bin/bash',
+            command=command,
             stdin_open=True,
             host_config=self.cli.create_host_config(binds=[
-                input_file + ':/mnt/input'
+                input_file + ":/mnt/input"
             ])
         )
         self.cli.start(self.container)
+
+
+class TaskRunner(DockerRunner):
+    def __init__(self, docker_image, input_file):
+        DockerRunner.__init__(self, docker_image, input_file, "/bin/bash")
 
     def exec_step(self, command):
         ex = self.cli.exec_create(container=self.container,

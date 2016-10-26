@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from tasks.tasks import grade, TaskRunner
+from tasks import tasks
 from django.test.utils import override_settings
 from tasks.models import Task, TaskSubmission, TaskStep
 from authentication.models import User
@@ -12,7 +12,7 @@ HELLO_C_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "hello.
 
 
 def test_docker():
-    runner = TaskRunner("gcc:latest", HELLO_C_PATH)
+    runner = tasks.TaskRunner("gcc:latest", HELLO_C_PATH)
     runner.exec_step("gcc -x c /mnt/input")
     result = runner.exec_step("./a.out")
     assert result.decode("utf8") == "hello world\n"
@@ -31,7 +31,7 @@ def test_queue():
         os.mkdir(task.get_task_dir())
     copyfile(HELLO_C_PATH, taskSubmission.get_submission_path())
 
-    result = grade.delay(taskSubmission.id)
+    result = tasks.grade.delay(taskSubmission.id)
 
     os.remove(taskSubmission.get_submission_path())
     assert result.get().decode("utf8") == "hello world\n"
