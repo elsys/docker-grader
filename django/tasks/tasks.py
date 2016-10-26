@@ -40,3 +40,8 @@ class TaskRunner(DockerRunner):
                                   cmd=command, stdout=True, stderr=True)
         res = self.cli.exec_start(ex)
         return res
+
+
+class GradingStepsRunner(DockerRunner):
+    def __init__(self):
+        DockerRunner.__init__(self, "python:latest", "rpc.py", "python /mnt/input")
