@@ -61,6 +61,12 @@ class TaskRunner(DockerRunner):
             stdin_open=True,
             host_config=self.cli.create_host_config(
                 binds=[input_file + ":/mnt/input"],
+                privileged=False,
+                network_mode='none',
+                mem_limit="100M",
+                memswap_limit="100M",
+                shm_size="100M",
+                pids_limit=100,
             )
         )
 
