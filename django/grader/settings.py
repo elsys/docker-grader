@@ -34,11 +34,13 @@ INSTALLED_APPS = (
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'authentication.middleware.LTIAuthMiddleware'
 )
+
+AUTHENTICATION_BACKENDS = ['authentication.backends.LTIAuthBackend', 'django.contrib.auth.backends.ModelBackend']
 
 ROOT_URLCONF = 'grader.urls'
 
@@ -138,3 +140,7 @@ LOGIN_URL = '/login'
 # CUSTOM
 CODEMIRROR_PATH = 'codemirror'
 CODEMIRROR_MODE = 'python'
+LTI_OAUTH_CREDENTIALS = {
+    'test': 'secret',
+    'test2': 'reallysecret'
+}
