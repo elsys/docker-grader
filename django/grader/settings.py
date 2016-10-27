@@ -139,7 +139,3 @@ LOGIN_URL = '/login'
 # CUSTOM
 CODEMIRROR_PATH = 'codemirror'
 CODEMIRROR_MODE = 'python'
-LTI_OAUTH_CREDENTIALS = {
-    'test': 'secret',
-    'test2': 'reallysecret'
-}

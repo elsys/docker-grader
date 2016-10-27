@@ -25,3 +25,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # CUSTOM
 GRADER_SUBMISSIONS_DIR = os.path.join(BASE_DIR, 'submissions')
+LTI_OAUTH_CREDENTIALS = {
+    'test': 'secret',
+    'test2': 'reallysecret'
+}
