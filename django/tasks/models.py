@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 class Task(models.Model):
     slug = models.SlugField(max_length=31, unique=True)
     docker_image = models.CharField(max_length=255)
+    description = models.TextField(null=True)
 
     def get_task_dir(self):
         return os.path.join(settings.GRADER_SUBMISSIONS_DIR, self.slug)
