@@ -1,18 +1,12 @@
 import logging
-import json
-
-from collections import OrderedDict
-
 from django.contrib import auth
-from django.core.exceptions import ImproperlyConfigured
-from django.conf import settings
+
 
 logger = logging.getLogger(__name__)
 
 
 class LTIAuthMiddleware(object):
     def process_request(self, request):
-        resource_link_id = None
         if request.method == 'POST' and request.POST.get('lti_message_type') == 'basic-lti-launch-request':
             logger.debug('received a basic-lti-launch-request - authenticating the user')
 
@@ -26,4 +20,3 @@ class LTIAuthMiddleware(object):
                 logger.debug('user was successfully authenticated; now log them in')
                 request.user = user
                 auth.login(request, user)
-
