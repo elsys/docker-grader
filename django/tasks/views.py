@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 
 from .models import Task
 from .models import TaskSubmission
@@ -34,17 +35,13 @@ class TaskView(View):
         form = self.form_class(request.POST, request.FILES)
         if form.is_valid():
             self.make_submission(request.user, request.FILES['zip_file'])
-            return HttpResponseRedirect('/')
 
-        return self.display_page(request, form, status=400)
+        return self.display_page(request, form, status=200)
 
     def display_page(self, request, form, status=200):
-        submissions = self.task.submissions.filter(user=request.user)
-
         context = {
             'form': form,
             'task': self.task,
-            'submissions': submissions
         }
         return render(request, self.template_name, context, status=status)
 
@@ -63,3 +60,18 @@ class TaskView(View):
         TaskLog.objects.create(
             task_submission=submission, action=TaskLog.LOG_TYPE.SUBMITTED)
         tasks.grade.delay(submission.id)
+
+
+class SubmissionsView(View):
+    @method_decorator(login_required)
+    def dispatch(self, request, task_id):
+        self.task = get_object_or_404(Task, id=task_id)
+
+        return super().dispatch(request, task_id)
+
+    def get(self, request, task_id):
+        submissions = self.task.submissions.filter(user=request.user)
+        result = []
+        for submission in submissions:
+            result.append({"grade": submission.grade, "logs": list(submission.log.all().values())})
+        return JsonResponse(result, safe=False)

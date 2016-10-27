@@ -1,20 +1,120 @@
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div>
-    {{ form }}
-    </div>
-    <input type="submit" value="Submit">
-</form>
-
-<ul class="submissions">
-  {% for submission in submissions.all %}
-  <li class="submission">
-    <p>{{ submission.uuid }} - {{ submission.grade }}</p>
-    <ul class="log">
-    {% for entry in submission.log.all %}
-      <li>{{ entry.date }} {{ entry.action }}: {{ entry.extra }}</li>
-    {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
+<html
+    <head>
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css"></link>
+        <script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.js"></script>
+        <style>
+            td.details-control {
+                background: url('https://datatables.net/examples/resources/details_open.png') no-repeat center center;
+                cursor: pointer;
+            }
+            tr.shown td.details-control {
+                background: url('https://datatables.net/examples/resources/details_close.png') no-repeat center center;
+            }
+        </style>
+        <script>
+            var oldData;
+            function format ( d ) {
+                table = $('<table>', {width: '100%'});
+                table.DataTable( {
+                        "paging":   false,
+                        "ordering": false,
+                        "info":     false,
+                        "searching":   false,
+                        columns: [
+                            { title: "Date", data: "date" },
+                            { title: "Action", data: "action" },
+                            { title: "Info", data: "extra" },
+                        ],
+                        data: d.logs
+                });
+                return table;
+            }
+            
+            function reloadData(t) {
+                $.ajax({
+                    dataType: "text",
+                    url: "http://localhost:8000/submissions/1/",
+                    success: function( data ) {
+                                if(data != oldData) {
+                                    t.clear();
+                                    t.rows.add($.parseJSON(data));
+                                    t.draw();
+                                    oldData = data;
+                                }
+                    }
+                });
+                
+            }
+            
+            $(document).ready(function() {
+                var table = $('#results').DataTable({
+                    "paging":   false,
+                    "ordering": false,
+                    "info":     false,
+                    "searching":   false,
+                    "columns": [
+                        {
+                            "className":      'details-control',
+                            "orderable":      false,
+                            "data":           null,
+                            "defaultContent": '',
+                            "width": "10px"
+                        },
+                        {
+                            "className": "dt-center",
+                            "data": function f(d) {
+                                return d.logs[0].date
+                            }
+                        },
+                        {
+                            "className": "dt-right",
+                            "data": "grade",
+                            "width": "10px"
+                        },
+                    ]
+                });
+                
+                $('#results tbody').on('click', 'td.details-control', function () {
+                    var tr = $(this).closest('tr');
+                    var row = table.row( tr );
+             
+                    if ( row.child.isShown() ) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                    }
+                    else {
+                        // Open this row
+                        row.child( format(row.data()) ).show();
+                        tr.addClass('shown');
+                    }
+                } );
+                
+                reloadData(table);
+                
+                setInterval( function () {
+                    reloadData(table);
+                }, 3000 );
+            } );
+        </script>
+    </head>
+    <body>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div>
+            {{ form }}
+            </div>
+            <input type="submit" value="Submit">
+        </form>
+        <table id="results"  class="display" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Details</th>
+                    <th>Date</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>
