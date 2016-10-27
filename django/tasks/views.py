@@ -5,7 +5,6 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import View
-from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 
 from .models import Task

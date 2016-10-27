@@ -5,7 +5,7 @@ import time
 from tasks import tasks
 from django.test.utils import override_settings
 from tasks.models import Task, TaskSubmission, TaskStep, TaskLog
-from authentication.models import User
+from django.contrib.auth.models import User
 from shutil import copyfile
 import xmlrpc.client
 
