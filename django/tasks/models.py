@@ -5,7 +5,7 @@ from django.db import models
 from django.utils import timezone
 from django.conf import settings
 
-from authentication.models import User
+from django.contrib.auth.models import User
 
 
 class Task(models.Model):

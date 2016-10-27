@@ -109,7 +109,6 @@ LOGGING = {
 APPEND_SLASH = False
 PREPEND_WWW = False
 USE_ETAGS = True
-AUTH_USER_MODEL = 'authentication.User'
 
 EMAIL_SUBJECT_PREFIX = '[ELSYS] '
 DEFAULT_FROM_EMAIL = 'ELSYS Grader <grader@elsys-bg.org>'

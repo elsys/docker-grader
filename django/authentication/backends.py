@@ -52,7 +52,7 @@ class LTIAuthBackend(ModelBackend):
         user = None
 
         # Retrieve username from LTI parameter or default to an overridable function return value
-        # username = tool_provider.lis_person_sourcedid
+        username = tool_provider.ext_user_username
 
         email = tool_provider.lis_person_contact_email_primary
         first_name = tool_provider.lis_person_name_given
@@ -61,7 +61,7 @@ class LTIAuthBackend(ModelBackend):
         UserModel = get_user_model()
 
         user, created = UserModel.objects.get_or_create(**{
-            UserModel.USERNAME_FIELD: email,
+            UserModel.USERNAME_FIELD: username,
         })
 
         # update the user
