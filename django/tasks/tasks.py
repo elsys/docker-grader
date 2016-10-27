@@ -24,10 +24,12 @@ def grade(submission_id):
             execution_result = runner.exec_step(input_result["command"]).decode("utf8")
             output_result = rpc.parse_output(step.output_source, input_result["state"], execution_result, "", 0)
             state = output_result["state"]
-            grade = output_result["grade"]
+            grade = grade + output_result["grade"]
             TaskLog.objects.create(task_submission=submission,
                                    action=TaskLog.LOG_TYPE.STEP_COMPLETED,
                                    extra=output_result["output_msg"])
+            if not output_result["exec_next_step"]:
+                break
     submission.grade = grade
     submission.save()
     return state
