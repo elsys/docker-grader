@@ -66,6 +66,7 @@ class TaskRunner(DockerRunner):
                 mem_limit="100M",
                 memswap_limit="100M",
                 shm_size="100M",
+                kernel_memory="50M",
                 pids_limit=100,
             )
         )
