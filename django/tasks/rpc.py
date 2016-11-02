@@ -9,7 +9,7 @@ def prepare_input_command(src, state):
 
 def parse_output(src, state, stdout, stderr, status_code):
     scope = {"state": state,
-             "stdout": stdout,
+             "stdout": stdout.data,
              "stderr": stderr,
              "status_code": status_code,
              "grade": 0,

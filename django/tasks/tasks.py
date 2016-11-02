@@ -7,7 +7,6 @@ from celery import shared_task
 from docker import Client
 from tasks.models import TaskSubmission, TaskLog
 from django.conf import settings
-from celery.exceptions import SoftTimeLimitExceeded
 
 
 @shared_task

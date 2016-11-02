@@ -1,4 +1,5 @@
 from tasks import rpc
+import xmlrpc.client
 
 TEST_INPUT_COMMAND_SOURCE = """
 command = "blabla"
@@ -21,7 +22,7 @@ exec_next_step = True
 
 
 def test_parse_output():
-    result = rpc.parse_output(TEST_OUTPUT_PARSING_SOURCE, 2, "stdout", "stderr", 15)
+    result = rpc.parse_output(TEST_OUTPUT_PARSING_SOURCE, 2, xmlrpc.client.Binary("stdout".encode()), "stderr", 15)
     assert result["state"] == 60
     assert result["grade"] == 30
     assert result["output_msg"] == "blabla"
@@ -46,14 +47,14 @@ exec_next_step = True
 
 
 def test_parse_output_no_state():
-    result = rpc.parse_output(TEST_OUTPUT_NO_STATE_SOURCE, 2, "stdout", "stderr", 15)
+    result = rpc.parse_output(TEST_OUTPUT_NO_STATE_SOURCE, 2, xmlrpc.client.Binary("stdout".encode()), "stderr", 15)
     assert result["grade"] == 30
     assert result["output_msg"] == "blabla"
     assert result["exec_next_step"]
 
 
 def test_parse_output_defaults():
-    result = rpc.parse_output("", 2, "stdout", "stderr", 15)
+    result = rpc.parse_output("", 2, xmlrpc.client.Binary("stdout".encode()), "stderr", 15)
     assert result["grade"] == 0
     assert result["output_msg"] == ""
     assert result["exec_next_step"]
