@@ -32,6 +32,7 @@ def grade(submission_id):
             if not output_result["exec_next_step"]:
                 break
     submission.grade = grade
+    submission.grading_completed = True
     submission.save()
     return state
 

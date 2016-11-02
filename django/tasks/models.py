@@ -30,6 +30,7 @@ class TaskSubmission(models.Model):
     user = models.ForeignKey(User, null=True, related_name='submissions')
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     grade = models.FloatField(default=0)
+    grading_completed = models.BooleanField(default=False)
 
     def get_submission_path(self):
         return os.path.join(self.task.get_task_dir(), str(self.uuid))
