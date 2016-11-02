@@ -16,6 +16,9 @@ class Task(models.Model):
     def get_task_dir(self):
         return os.path.join(settings.GRADER_SUBMISSIONS_DIR, self.slug)
 
+    def __str__(self):
+        return self.slug
+
 
 class TaskStep(models.Model):
     order = models.PositiveSmallIntegerField()
@@ -23,6 +26,9 @@ class TaskStep(models.Model):
 
     input_source = models.TextField()
     output_source = models.TextField()
+
+    def __str__(self):
+        return str(self.task) + ': ' + str(self.order)
 
 
 class TaskSubmission(models.Model):
@@ -34,6 +40,13 @@ class TaskSubmission(models.Model):
 
     def get_submission_path(self):
         return os.path.join(self.task.get_task_dir(), str(self.uuid))
+
+    def __str__(self):
+        return self.user.get_username() + ': ' + str(self.task) + ' (' + str(self.grade) + ')'
+
+    def regrade(self):
+        from tasks import tasks
+        tasks.grade.delay(self.id)
 
 
 class TaskLog(models.Model):
@@ -55,3 +68,6 @@ class TaskLog(models.Model):
     date = models.DateTimeField(default=timezone.now, editable=False)
     action = models.CharField(max_length=15, choices=DJANGO_LOG_TYPES)
     extra = models.TextField()
+
+    def __str__(self):
+        return str(self.task_submission) + ': ' + self.get_action_display()

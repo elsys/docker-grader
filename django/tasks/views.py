@@ -12,7 +12,6 @@ from .models import TaskSubmission
 from .models import TaskLog
 
 from .forms import TaskForm
-from tasks import tasks
 
 
 class TaskView(View):
@@ -58,7 +57,8 @@ class TaskView(View):
 
         TaskLog.objects.create(
             task_submission=submission, action=TaskLog.LOG_TYPE.SUBMITTED)
-        tasks.grade.delay(submission.id)
+
+        submission.regrade()
 
 
 class SubmissionsView(View):
