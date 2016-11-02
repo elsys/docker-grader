@@ -7,6 +7,7 @@ from celery import shared_task
 from docker import Client
 from tasks.models import TaskSubmission, TaskLog
 from django.conf import settings
+from celery.exceptions import SoftTimeLimitExceeded
 
 
 @shared_task
@@ -21,7 +22,7 @@ def grade(submission_id):
 
         for step in submission.task.steps.order_by("order"):
             input_result = rpc.prepare_input_command(step.input_source, state)
-            execution_result = runner.exec_step(input_result["command"]).decode("utf8")
+            execution_result = runner.exec_step(input_result["command"])
             output_result = rpc.parse_output(step.output_source, input_result["state"], execution_result, "", 0)
             state = output_result["state"]
             grade = grade + output_result["grade"]
