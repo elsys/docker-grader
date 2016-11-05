@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import View
+from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 
 from .models import Task
@@ -33,8 +34,9 @@ class TaskView(View):
         form = self.form_class(request.POST, request.FILES)
         if form.is_valid():
             self.make_submission(request.user, request.FILES['zip_file'])
+            return HttpResponseRedirect(request.get_full_path())
 
-        return self.display_page(request, form, status=200)
+        return self.display_page(request, form, status=400)
 
     def display_page(self, request, form, status=200):
         context = {

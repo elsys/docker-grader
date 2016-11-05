@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from django.core.urlresolvers import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -8,7 +10,7 @@ from tasks.models import TaskSubmission
 
 
 @pytest.mark.django_db
-def test_empty_file_upload(client):
+def test_empty_file_upload(admin_client):
     task = Task.objects.create(slug='test')
 
     url = reverse('task', kwargs={'task_id': task.id})
@@ -16,12 +18,12 @@ def test_empty_file_upload(client):
     zip_file = SimpleUploadedFile(
         "task1.zip", "", content_type="application/zip")
 
-    response = client.post(url, {'zip_file': zip_file})
+    response = admin_client.post(url, {'zip_file': zip_file})
     assert response.status_code == 400
 
 
 @pytest.mark.django_db
-def test_valid_file_upload(client):
+def test_valid_file_upload(admin_client):
     task = Task.objects.create(slug='test')
     data = b"a"
 
@@ -30,8 +32,9 @@ def test_valid_file_upload(client):
     zip_file = SimpleUploadedFile(
         "task1.zip", data, content_type="application/zip")
 
-    response = client.post(url, {'zip_file': zip_file})
+    response = admin_client.post(url, {'zip_file': zip_file})
     assert response.status_code == 302
+    assert urlparse(response.url).path == url
 
     submissions = TaskSubmission.objects.all()
     assert len(submissions) == 1
