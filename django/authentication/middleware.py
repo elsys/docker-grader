@@ -1,5 +1,7 @@
 import logging
+
 from django.contrib import auth
+from django.http import HttpResponseRedirect
 
 
 logger = logging.getLogger(__name__)
@@ -20,3 +22,4 @@ class LTIAuthMiddleware(object):
                 logger.debug('user was successfully authenticated; now log them in')
                 request.user = user
                 auth.login(request, user)
+                return HttpResponseRedirect(request.get_full_path())
