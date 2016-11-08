@@ -7,6 +7,7 @@ from celery import shared_task
 from docker import Client
 from tasks.models import TaskSubmission, TaskLog
 from django.conf import settings
+from celery.exceptions import SoftTimeLimitExceeded
 
 
 @shared_task
@@ -20,16 +21,23 @@ def grade(submission_id):
         time.sleep(1)
 
         for step in submission.task.steps.order_by("order"):
-            input_result = rpc.prepare_input_command(step.input_source, state)
-            execution_result = runner.exec_step(input_result["command"])
-            output_result = rpc.parse_output(step.output_source, input_result["state"], execution_result, "", 0)
-            state = output_result["state"]
-            grade = grade + output_result["grade"]
+            try:
+                input_result = rpc.prepare_input_command(step.input_source, state)
+                execution_result = runner.exec_step(input_result["command"])
+                output_result = rpc.parse_output(step.output_source, input_result["state"], execution_result, "", 0)
+                state = output_result["state"]
+                grade = grade + output_result["grade"]
+                message = output_result["output_msg"]
+
+                if not output_result["exec_next_step"]:
+                    break
+            except SoftTimeLimitExceeded:
+                message = "Time limit exceeded"
+                break
             TaskLog.objects.create(task_submission=submission,
                                    action=TaskLog.LOG_TYPE.STEP_COMPLETED,
-                                   extra=output_result["output_msg"])
-            if not output_result["exec_next_step"]:
-                break
+                                   extra=message)
+
     submission.grade = grade
     submission.grading_completed = True
     submission.save()
