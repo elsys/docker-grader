@@ -28,15 +28,17 @@ def grade(submission_id):
                 state = output_result["state"]
                 grade = grade + output_result["grade"]
                 message = output_result["output_msg"]
+                exec_next_step = output_result["exec_next_step"]
 
-                if not output_result["exec_next_step"]:
-                    break
             except SoftTimeLimitExceeded:
                 message = "Time limit exceeded"
-                break
+                exec_next_step = False
+
             TaskLog.objects.create(task_submission=submission,
                                    action=TaskLog.LOG_TYPE.STEP_COMPLETED,
                                    extra=message)
+            if not exec_next_step:
+                    break
 
     submission.grade = grade
     submission.grading_completed = True
