@@ -20,6 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MY_APPS = (
     'authentication',
     'tasks',
+    'teachers',
 )
 
 INSTALLED_APPS = (

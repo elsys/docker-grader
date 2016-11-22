@@ -1,0 +1,41 @@
+<html
+    <head>
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css"></link>
+        <script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.js"></script>
+        <script>
+                $(document).ready(function() {
+                    var table = $('#results').DataTable({
+                        "paging":   false,
+                        "ordering": false,
+                        "info":     false,
+                        "searching":   false,
+                        "columns": [
+                            {
+                                "className": "dt-center",
+                            },
+                            {
+                                "className": "dt-right",
+                            },
+                        ]
+                    });
+                });
+                
+            
+        </script>
+    </head>
+    <body>
+        <table id="results"  class="display" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            {% for submission in submissions %}
+                <tr><td>{{ submission.user__username }}</td><td>{{ submission.grade }}</td></tr>
+            {% endfor %}
+            
+        </table>
+    </body>
+</html>
