@@ -72,6 +72,13 @@
                             "data": "grade",
                             "width": "10px"
                         },
+                        {
+                            "className": "dt-right",
+                            "data": function f(d) {
+                                return "<a href='/teachers/download/" + d.id + "/'>Download</a>"
+                            },
+                            "width": "10px"
+                        },
                     ]
                 });
                 
@@ -114,6 +121,7 @@
                     <th>Details</th>
                     <th>Date</th>
                     <th>Grade</th>
+                    <th>Download</th>
                 </tr>
             </thead>
         </table>
