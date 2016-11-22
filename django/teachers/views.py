@@ -7,10 +7,13 @@ from tasks.models import Task, TaskSubmission
 from django.db.models import Max
 from django.http import JsonResponse
 from django.utils.encoding import smart_str
+from django.contrib.admin.views.decorators import staff_member_required
+from django.utils.decorators import method_decorator
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
 
+@staff_member_required
 def download(request, submission_id):
     submission = TaskSubmission.objects.get(pk=submission_id)
     file_name = submission.task.slug + "_" + submission.user.username + "_" + submission_id
@@ -22,7 +25,7 @@ def download(request, submission_id):
 class TaskView(View):
     template_name = 'submissions.html'
 
-    #@staff_member_required
+    @method_decorator(staff_member_required)
     def dispatch(self, request, task_id):
         self.task = get_object_or_404(Task, id=task_id)
 
@@ -39,7 +42,7 @@ class TaskView(View):
 class SubmissionsView(View):
     template_name = 'task.html'
 
-    #@staff_member_require
+    @method_decorator(staff_member_required)
     def dispatch(self, request, task_id, user_id):
         self.task = get_object_or_404(Task, id=task_id)
 
@@ -52,7 +55,7 @@ class SubmissionsView(View):
         return render(request, self.template_name, context, status=200)
 
 class SubmissionsDataView(View):
-    #@method_decorator(login_required)
+    @method_decorator(staff_member_required)
     def dispatch(self, request, task_id, user_id):
         self.task = get_object_or_404(Task, id=task_id)
 
