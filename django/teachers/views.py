@@ -13,7 +13,7 @@ def index(request):
 
 def download(request, submission_id):
     submission = TaskSubmission.objects.get(pk=submission_id)
-    file_name = "download.zip"
+    file_name = submission.task.slug + "_" + submission.user.username + "_" + submission_id
     response = HttpResponse(content_type='application/force-download')
     response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(file_name)
     response['X-Sendfile'] = smart_str(submission.get_submission_path())
