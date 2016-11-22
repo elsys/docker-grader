@@ -34,7 +34,7 @@
             function reloadData(t) {
                 $.ajax({
                     dataType: "text",
-                    url: "/submissions/{{ task.id }}/",
+                    url: "{{ data_url }}",
                     success: function( data ) {
                                 if(data != oldData) {
                                     t.clear();

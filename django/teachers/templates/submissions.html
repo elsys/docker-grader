@@ -33,7 +33,7 @@
                 </tr>
             </thead>
             {% for submission in submissions %}
-                <tr><td>{{ submission.user__username }}</td><td>{{ submission.grade }}</td></tr>
+                <tr><td><a href="{{ data_url }}/{{ submission.user }}/">{{ submission.user__username }}<a></td><td>{{ submission.grade }}</td></tr>
             {% endfor %}
             
         </table>

@@ -41,6 +41,7 @@ class TaskView(View):
     def display_page(self, request, form, status=200):
         context = {
             'form': form,
+            'data_url': "/submissions/" + task_id + "/",
             'task': self.task,
         }
         return render(request, self.template_name, context, status=status)
