@@ -34,7 +34,7 @@ class TaskView(View):
     def get(self, request, task_id):
         context = {
             'data_url': "/teachers/submissions/" + task_id,
-            'submissions': self.task.submissions.values('user', 'user__username').annotate(grade=Max('grade'))
+            'submissions': self.task.submissions.values('user', 'user__username', 'user__first_name', 'user__last_name').annotate(grade=Max('grade'))
         }
         return render(request, self.template_name, context, status=200)
 

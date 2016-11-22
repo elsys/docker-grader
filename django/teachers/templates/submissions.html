@@ -12,6 +12,9 @@
                         "searching":   false,
                         "columns": [
                             {
+                                "className": "dt-left",
+                            },
+                            {
                                 "className": "dt-center",
                             },
                             {
@@ -28,12 +31,13 @@
         <table id="results"  class="display" cellspacing="0" width="100%">
             <thead>
                 <tr>
+                    <th>Username</th>
                     <th>User</th>
                     <th>Grade</th>
                 </tr>
             </thead>
             {% for submission in submissions %}
-                <tr><td><a href="{{ data_url }}/{{ submission.user }}/">{{ submission.user__username }}<a></td><td>{{ submission.grade }}</td></tr>
+                <tr><td><a href="{{ data_url }}/{{ submission.user }}/">{{ submission.user__username }}<a></td><td>{{ submission.user__first_name }} {{ submission.user__last_name }}</td><td>{{ submission.grade }}</td></tr>
             {% endfor %}
             
         </table>
