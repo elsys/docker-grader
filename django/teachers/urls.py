@@ -12,4 +12,5 @@ urlpatterns = [
     url(r'^submissions_data/(?P<task_id>\d+)/(?P<user_id>\d+)/$',
         SubmissionsDataView.as_view(),
         name='task-submissions'),
+    url(r'^download/(?P<submission_id>\d+)/$', views.download, name='download'),
 ]

@@ -3,13 +3,21 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
-from tasks.models import Task
+from tasks.models import Task, TaskSubmission
 from django.db.models import Max
 from django.http import JsonResponse
+from django.utils.encoding import smart_str
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
 
+def download(request, submission_id):
+    submission = TaskSubmission.objects.get(pk=submission_id)
+    file_name = "download.zip"
+    response = HttpResponse(content_type='application/force-download')
+    response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(file_name)
+    response['X-Sendfile'] = smart_str(submission.get_submission_path())
+    return response
 
 class TaskView(View):
     template_name = 'submissions.html'
@@ -54,5 +62,5 @@ class SubmissionsDataView(View):
         submissions = self.task.submissions.filter(user=user_id)
         result = []
         for submission in submissions:
-            result.append({"grade": submission.grade, "uuid": submission.uuid, "logs": list(submission.log.all().values())})
+            result.append({"grade": submission.grade, "id": submission.id, "logs": list(submission.log.all().values())})
         return JsonResponse(result, safe=False)
