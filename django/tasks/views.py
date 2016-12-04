@@ -75,5 +75,7 @@ class SubmissionsView(View):
         submissions = self.task.submissions.filter(user=request.user)
         result = []
         for submission in submissions:
-            result.append({"grade": submission.grade, "id": submission.id, "logs": list(submission.log.all().values())})
+            result.append({"grade": submission.grade,
+                           "id": submission.id,
+                           "logs": list(submission.log.all().values())})
         return JsonResponse(result, safe=False)

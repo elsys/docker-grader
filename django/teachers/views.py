@@ -7,11 +7,12 @@ from tasks.models import Task, TaskSubmission
 from django.db.models import Max
 from django.http import JsonResponse
 from django.utils.encoding import smart_str
-from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.decorators import method_decorator
+
 
 def index(request):
     return HttpResponse("Hello, world. You're at the polls index.")
+
 
 @staff_member_required
 def download(request, submission_id):
@@ -21,6 +22,7 @@ def download(request, submission_id):
     response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(file_name)
     response['X-Sendfile'] = smart_str(submission.get_submission_path())
     return response
+
 
 class TaskView(View):
     template_name = 'submissions.html'
@@ -34,7 +36,9 @@ class TaskView(View):
     def get(self, request, task_id):
         context = {
             'data_url': "/teachers/submissions/" + task_id,
-            'submissions': self.task.submissions.values('user', 'user__username', 'user__first_name', 'user__last_name').annotate(grade=Max('grade'))
+            'submissions': self.task.submissions
+                                    .values('user', 'user__username', 'user__first_name', 'user__last_name')
+                                    .annotate(grade=Max('grade'))
         }
         return render(request, self.template_name, context, status=200)
 
@@ -54,6 +58,7 @@ class SubmissionsView(View):
         }
         return render(request, self.template_name, context, status=200)
 
+
 class SubmissionsDataView(View):
     @method_decorator(staff_member_required)
     def dispatch(self, request, task_id, user_id):
@@ -65,5 +70,7 @@ class SubmissionsDataView(View):
         submissions = self.task.submissions.filter(user=user_id)
         result = []
         for submission in submissions:
-            result.append({"grade": submission.grade, "id": submission.id, "logs": list(submission.log.all().values())})
+            result.append({"grade": submission.grade,
+                           "id": submission.id,
+                           "logs": list(submission.log.all().values())})
         return JsonResponse(result, safe=False)
