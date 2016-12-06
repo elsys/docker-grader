@@ -68,6 +68,7 @@ class TaskView(View):
 
     def get(self, request, task_id):
         context = {
+            'task_id': task_id,
             'data_url': "/teachers/submissions/" + task_id,
             'submissions': self.task.submissions
                                     .values('user', 'user__username', 'user__first_name', 'user__last_name')
