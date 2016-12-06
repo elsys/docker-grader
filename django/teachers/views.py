@@ -48,7 +48,7 @@ def download_all_for_task(request, task_id):
             best_submission = submission
 
     best_archive = os.path.join(task.get_task_dir(), "best.tar.gz")
-    os.system("tar -cvzf " + best_archive + " -C " + best_dir + " .")
+    os.system("tar -cvzf " + best_archive + " -C " + best_dir + " *")
 
     file_name = submission.task.slug + "_best.tar.gz"
     response = HttpResponse(content_type='application/force-download')
