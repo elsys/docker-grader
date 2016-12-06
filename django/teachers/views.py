@@ -8,6 +8,7 @@ from django.db.models import Max
 from django.http import JsonResponse
 from django.utils.encoding import smart_str
 from django.utils.decorators import method_decorator
+import os
 
 
 def index(request):
@@ -21,6 +22,38 @@ def download(request, submission_id):
     response = HttpResponse(content_type='application/force-download')
     response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(file_name)
     response['X-Sendfile'] = smart_str(submission.get_submission_path())
+    return response
+
+
+@staff_member_required
+def download_all_for_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    best_dir = os.path.join(task.get_task_dir(), "best")
+    os.makedirs(best_dir, mode=0o2777, exist_ok=True)
+
+    best_submission = None
+    current_user = None
+
+    for submission in task.submissions.order_by("user"):
+        if submission.user != current_user:
+            current_user = submission.user
+            if best_submission != None:
+                user_dir = os.path.join(best_dir, best_submission.user.username)
+                os.makedirs(user_dir, mode=0o2777, exist_ok=True)
+                command = "unzip " + best_submission.get_submission_path() + " -d " + user_dir + " || " \
+                          "tar -zxvf " + best_submission.get_submission_path() + " -C " + user_dir
+                os.system(command)
+            best_submission = None
+        if best_submission == None or submission.grade >= best_submission.grade:
+            best_submission = submission
+
+    best_archive = os.path.join(task.get_task_dir(), "best.tar.gz")
+    os.system("tar -cvzf " + best_archive + " -C " + best_dir + " .")
+
+    file_name = submission.task.slug + "_best.tar.gz"
+    response = HttpResponse(content_type='application/force-download')
+    response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(file_name)
+    response['X-Sendfile'] = smart_str(best_archive)
     return response
 
 
