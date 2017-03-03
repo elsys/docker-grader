@@ -11,10 +11,6 @@ from django.utils.decorators import method_decorator
 import os
 
 
-def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
-
-
 @staff_member_required
 def download(request, submission_id):
     submission = TaskSubmission.objects.get(pk=submission_id)
