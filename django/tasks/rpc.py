@@ -7,9 +7,9 @@ def prepare_input_command(src, state):
     return {"command": scope["command"], "state": scope["state"]}
 
 
-def parse_output(src, state, stdout, stderr, status_code):
+def parse_output_local(src, state, stdout, stderr, status_code):
     scope = {"state": state,
-             "stdout": stdout.data,
+             "stdout": stdout,
              "stderr": stderr,
              "status_code": status_code,
              "grade": 0,
@@ -21,6 +21,8 @@ def parse_output(src, state, stdout, stderr, status_code):
             "output_msg": scope["output_msg"],
             "exec_next_step": scope["exec_next_step"]}
 
+def parse_output(src, state, stdout, stderr, status_code):
+    return parse_output_local(src, state, stdout.data, stderr, status_code)
 
 if __name__ == "__main__":
     server = SimpleXMLRPCServer(("0.0.0.0", 8000))
