@@ -7,9 +7,12 @@ class Command(BaseCommand):
     args = '<task-slug> <filename>'
 
 
+    def prettify_source(self, source):
+        return "\n" + source.replace("\r\n","\n") + "\n"
+
     def prepare_step(self, step, step_el):
-        etree.SubElement(step_el, "input").text = step.input_source
-        etree.SubElement(step_el, "output").text = step.output_source
+        etree.SubElement(step_el, "input").text = self.prettify_source(step.input_source)
+        etree.SubElement(step_el, "output").text = self.prettify_source(step.output_source)
 
     def handle(self, *args, **options):
         task = Task.objects.get(slug=args[0])
