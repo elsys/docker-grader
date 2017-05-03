@@ -44,6 +44,7 @@ class Command(BaseCommand):
                 if not exec_next_step:
                     print("STOPPING")
                     break
+        print("End grade {}\n".format(grade))
 
     def handle(self, *args, **options):
         inputs = []
