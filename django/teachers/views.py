@@ -11,9 +11,15 @@ from django.db.models import Max
 from django.http import JsonResponse
 from django.utils.encoding import smart_str
 from django.utils.decorators import method_decorator
+from django.contrib.auth import get_user_model
 
 from tasks.models import Task, TaskSubmission
+from django.template.defaulttags import register
 
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)
 
 def get_submission_uri_from_path(path):
     base = urljoin(settings.STATIC_URL, 'submissions/')
@@ -127,3 +133,24 @@ class SubmissionsDataView(View):
                            "id": submission.id,
                            "logs": list(submission.log.all().values())})
         return JsonResponse(result, safe=False)
+
+
+class GradesView(View):
+    template_name = 'grades.html'
+    
+    @method_decorator(staff_member_required)
+    def get(self, request):
+        tasks = Task.objects.all().values("slug", "id")
+        grades = []
+        
+        for username in get_user_model().objects.all().values_list('username', flat=True):
+            user_grades = { 'username': username }
+            for grade in TaskSubmission.objects.filter(user__username=username).values('task_id').annotate(grade=Max('grade')):
+                user_grades[grade['task_id']] = grade['grade']
+            grades.append(user_grades)
+            
+        context = {
+            'grades': grades,
+            'tasks': tasks
+        }
+        return render(request, self.template_name, context, status=200)

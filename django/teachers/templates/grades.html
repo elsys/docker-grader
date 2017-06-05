@@ -1,0 +1,26 @@
+<html
+    <head>
+    </head>
+    <body>
+        <a href="/teachers/download_all/{{ task_id }}/">Download All</a>
+        <table id="results"  class="display" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    {% for task in tasks %}
+                        <th>{{ task.slug }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            {% for grade in grades %}
+                <tr>
+                    <td>{{ grade.username }}</td>
+                    {% for task in tasks %}
+                        <td>{{ grade|get_item:task.id }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            
+        </table>
+    </body>
+</html>
