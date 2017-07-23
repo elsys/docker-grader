@@ -4,7 +4,7 @@ import os
 import xmlrpc.client
 import time
 from celery import shared_task
-from docker import Client
+from docker import APIClient
 from tasks.models import TaskSubmission, TaskLog
 from django.conf import settings
 from celery.exceptions import SoftTimeLimitExceeded
@@ -48,7 +48,7 @@ def grade(submission_id):
 
 class DockerRunner:
     def __init__(self):
-        self.cli = Client(base_url="unix://var/run/docker.sock")
+        self.cli = APIClient(base_url="unix://var/run/docker.sock")
 
     def stop(self):
         self.cli.kill(self.container)
