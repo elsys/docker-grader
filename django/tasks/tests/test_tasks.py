@@ -76,7 +76,7 @@ def test_grade(generate_task_submission):
     assert count == 2
 
 
-@override_settings(CELERY_ALWAYS_EAGER=True)
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 def test_grade_with_queue(generate_task_submission):
     result = tasks.grade.delay(generate_task_submission)
     assert result.get() == "hello world\n"

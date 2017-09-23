@@ -25,6 +25,7 @@ def parse_output_local(src, state, stdout, stderr, status_code):
 def parse_output(src, state, stdout, stderr, status_code):
     return parse_output_local(src, state, stdout.data, stderr, status_code)
 
+
 if __name__ == "__main__":
     server = SimpleXMLRPCServer(("0.0.0.0", 8000))
     server.register_function(prepare_input_command, 'prepare_input_command')
