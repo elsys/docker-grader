@@ -1,16 +1,16 @@
-from django.core.management.base import BaseCommand, CommandError
-from tasks.tasks import TaskRunner, GradingStepsRunner
+from django.core.management.base import BaseCommand
+from tasks.tasks import TaskRunner
 import pprint
 from tasks import rpc
 
+
 class Command(BaseCommand):
-    help = 'Run test task from file'
+    help = 'Run test task from dir'
     args = '<docker-name> <submission> <filename>'
 
     def exec_task(self, docker_image, submission, inputs, outputs):
         state = "/mnt/input"
         grade = 0
-
 
         with TaskRunner(docker_image, submission) as runner:
 
@@ -30,10 +30,11 @@ class Command(BaseCommand):
                 except UnicodeError:
                     print("error decoding")
 
-                output_result = rpc.parse_output_local(output_code, input_result["state"], execution_result, "", 0)
+                output_result = rpc.parse_output_local(
+                    output_code, input_result["state"],
+                    execution_result, "", 0)
                 state = output_result["state"]
                 grade = grade + output_result["grade"]
-                message = output_result["output_msg"]
                 exec_next_step = output_result["exec_next_step"]
 
                 print("Output")
@@ -52,7 +53,6 @@ class Command(BaseCommand):
 
         with open(args[2], 'r') as infile:
             currentBuffer = ""
-
 
             for line in infile:
                 if line.strip() == "#-----INPUT-TASK-STEP-----":

@@ -21,6 +21,7 @@ from django.template.defaulttags import register
 def get_item(dictionary, key):
     return dictionary.get(key)
 
+
 def get_submission_uri_from_path(path):
     base = urljoin(settings.STATIC_URL, 'submissions/')
     return urljoin(base,
@@ -30,11 +31,14 @@ def get_submission_uri_from_path(path):
 @staff_member_required
 def download(request, submission_id):
     submission = TaskSubmission.objects.get(pk=submission_id)
-    file_name = submission.task.slug + "_" + submission.user.username + "_" + submission_id
+    file_name = '{0!s}_{1!s}_{2!s}'.format(submission.task.slug,
+                                           submission.user.username,
+                                           submission_id)
     path = smart_str(submission.get_submission_path())
 
     response = HttpResponse(content_type='application/force-download')
-    response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(file_name)
+    response['Content-Disposition'] = 'attachment; filename={0!s}'.format(
+        smart_str(file_name))
     response['X-Sendfile'] = path
     response['X-Accel-Redirect'] = get_submission_uri_from_path(path)
     return response
@@ -52,21 +56,24 @@ def download_all_for_task(request, task_id):
     for submission in task.submissions.order_by("user", "id"):
         if submission.user != current_user:
             current_user = submission.user
-            if best_submission != None:
-                user_dir = os.path.join(best_dir, best_submission.user.username)
+            if best_submission is not None:
+                user_dir = os.path.join(best_dir,
+                                        best_submission.user.username)
                 os.makedirs(user_dir, mode=0o2777, exist_ok=True)
-                command = "unzip " + best_submission.get_submission_path() + " -d " + user_dir + " || " \
-                          "tar -zxvf " + best_submission.get_submission_path() + " -C " + user_dir
+                command = 'unzip {0!s} -d {1!s} || tar -zxvf {0!s} -C {1!s}'
+                command = command.format(best_submission.get_submission_path(),
+                                         user_dir)
                 os.system(command)
             best_submission = None
-        if best_submission == None or submission.grade >= best_submission.grade:
+        if best_submission is None or \
+           submission.grade >= best_submission.grade:
             best_submission = submission
 
-    if best_submission != None:
+    if best_submission is not None:
         user_dir = os.path.join(best_dir, best_submission.user.username)
         os.makedirs(user_dir, mode=0o2777, exist_ok=True)
-        command = "unzip " + best_submission.get_submission_path() + " -d " + user_dir + " || " \
-                  "tar -zxvf " + best_submission.get_submission_path() + " -C " + user_dir
+        command = 'unzip {0!s} -d {1!s} || tar -zxvf {0!s} -C {1!s}'.format(
+            best_submission.get_submission_path(), user_dir)
         os.system(command)
 
     best_archive = os.path.join(task.get_task_dir(), "best.tar.gz")
@@ -76,7 +83,8 @@ def download_all_for_task(request, task_id):
     path = smart_str(best_archive)
 
     response = HttpResponse(content_type='application/force-download')
-    response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(file_name)
+    response['Content-Disposition'] = 'attachment; filename={0!s}'.format(
+        smart_str(file_name))
     response['X-Sendfile'] = path
     response['X-Accel-Redirect'] = get_submission_uri_from_path(path)
     return response
@@ -96,8 +104,9 @@ class TaskView(View):
             'task_id': task_id,
             'data_url': "/teachers/submissions/" + task_id,
             'submissions': self.task.submissions
-                                    .values('user', 'user__username', 'user__first_name', 'user__last_name')
-                                    .annotate(grade=Max('grade'))
+                               .values('user', 'user__username',
+                                       'user__first_name', 'user__last_name')
+                               .annotate(grade=Max('grade'))
         }
         return render(request, self.template_name, context, status=200)
 
@@ -113,7 +122,8 @@ class SubmissionsView(View):
 
     def get(self, request, task_id, user_id):
         context = {
-            'data_url': "/teachers/submissions_data/" + task_id + "/" + user_id + "/",
+            'data_url': '/teachers/submissions_data/{0!s}/{1!s}/'.format(
+                task_id, user_id),
         }
         return render(request, self.template_name, context, status=200)
 
@@ -137,18 +147,24 @@ class SubmissionsDataView(View):
 
 class GradesView(View):
     template_name = 'grades.html'
-    
+
     @method_decorator(staff_member_required)
     def get(self, request):
         tasks = Task.objects.all().values("slug", "id")
         grades = []
-        
-        for username in get_user_model().objects.all().values_list('username', flat=True):
-            user_grades = { 'username': username }
-            for grade in TaskSubmission.objects.filter(user__username=username).values('task_id').annotate(grade=Max('grade')):
+        usernames = get_user_model().objects.all().values_list(
+            'username', flat=True)
+
+        for username in usernames:
+            user_grades = {'username': username}
+            task_submissions = TaskSubmission.objects \
+                .filter(user__username=username).values('task_id') \
+                .annotate(grade=Max('grade'))
+
+            for grade in task_submissions:
                 user_grades[grade['task_id']] = grade['grade']
             grades.append(user_grades)
-            
+
         context = {
             'grades': grades,
             'tasks': tasks

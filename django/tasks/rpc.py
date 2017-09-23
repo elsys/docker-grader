@@ -21,6 +21,7 @@ def parse_output_local(src, state, stdout, stderr, status_code):
             "output_msg": scope["output_msg"],
             "exec_next_step": scope["exec_next_step"]}
 
+
 def parse_output(src, state, stdout, stderr, status_code):
     return parse_output_local(src, state, stdout.data, stderr, status_code)
 
