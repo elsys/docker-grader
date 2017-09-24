@@ -1,6 +1,3 @@
-import os.path
-import pprint
-
 from django.core.management.base import BaseCommand
 
 from grader.base.task import Task
@@ -8,52 +5,10 @@ from grader.base.task import Task
 
 class Command(BaseCommand):
     help = 'Run test task from dir'
-    args = '<task_definition_dir>'
-
-    def exec_task(self, docker_image, submission, inputs, outputs):
-        state = "/mnt/input"
-        grade = 0
-
-        with TaskRunner(docker_image, submission) as runner:
-
-            for input_code, output_code in zip(inputs, outputs):
-                input_result = rpc.prepare_input_command(input_code, state)
-                print("Input")
-                pprint.pprint(input_result)
-
-                execution_result = runner.exec_step(input_result["command"])
-
-                print("Execution result:")
-                pprint.pprint(execution_result)
-                try:
-                    print("-----DOCKER STDOUT(DECODED)------")
-                    print(execution_result.decode("utf8"))
-                    print("-----------")
-                except UnicodeError:
-                    print("error decoding")
-
-                output_result = rpc.parse_output_local(
-                    output_code, input_result["state"],
-                    execution_result, "", 0)
-                state = output_result["state"]
-                grade = grade + output_result["grade"]
-                exec_next_step = output_result["exec_next_step"]
-
-                print("Output")
-                pprint.pprint(output_result)
-
-                print("\n-----------\n")
-
-                if not exec_next_step:
-                    print("STOPPING")
-                    break
-        print("End grade {}\n".format(grade))
-
 
     def add_arguments(self, parser):
         parser.add_argument('task_definition_dir', type=str)
         parser.add_argument('test_file_path', type=str)
-
 
     def handle(self, task_definition_dir, test_file_path, *args, **options):
         task = Task.from_dir(task_definition_dir)
@@ -96,4 +51,3 @@ class Command(BaseCommand):
 
         self.stderr.write(style_func('Total marks: {0:d}/{1:d}').format(
             total_marks, task.max_marks))
-

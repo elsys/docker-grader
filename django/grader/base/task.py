@@ -2,8 +2,6 @@ import os.path
 import shlex
 from collections import OrderedDict
 
-import yaml
-
 from . import logger
 from .utils import ordered_load
 from .docker import docker_image_build
@@ -55,8 +53,6 @@ class TaskStep:
         state.update(postprocess_result['state'])
         return postprocess_result
 
-
-
     def grade(self, grading_runner, testing_runner,
               base_preprocess_kwargs):
         step_result = {
@@ -96,7 +92,6 @@ class TaskStep:
                     "You are probably reading/writing to memory, "
                     "which you don't control.")
                 raise
-
 
             postprocess_kwargs = testing_result.copy()
             postprocess_kwargs['state'] = state
@@ -144,7 +139,6 @@ class Task:
             testing_tag, 'Dockerfile.testing', task_definition_dir)
 
         return cls(grading_tag, testing_tag, steps)
-
 
     def __init__(self, grading_image, testing_image, steps):
         self.grading_image = grading_image

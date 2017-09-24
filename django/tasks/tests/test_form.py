@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 
+from django.test.utils import override_settings
 from django.core.urlresolvers import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -23,6 +24,7 @@ def test_empty_file_upload(admin_client):
 
 
 @pytest.mark.django_db
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 def test_valid_file_upload(admin_client):
     task = Task.objects.create(slug='test')
     data = b"a"

@@ -6,7 +6,6 @@ from .docker import client as docker_client
 from .docker import DockerRunner
 
 
-
 class GradingRunner(DockerRunner):
     def __init__(self, docker_image):
         super().__init__()
@@ -24,7 +23,7 @@ class GradingRunner(DockerRunner):
         self.container = docker_client.containers.create(
             image=docker_image,
             command=['python', rpc_container_path],
-#            auto_remove=True,
+            auto_remove=True,
             detach=True,
             network_mode='bridge',
             oom_kill_disable=False,
@@ -51,7 +50,6 @@ class GradingRunner(DockerRunner):
 
     def rpc_call(self, func, *args, **kwargs):
         return getattr(self.rpc, func)(*args, **kwargs)
-
 
 
 class TestingRunner(DockerRunner):
