@@ -1,0 +1,24 @@
+---
+steps:
+  compile:
+    marks: 0
+  forbidden_funcs:
+    marks: 0
+  basic_255_lines:
+    marks: 50
+  multiple_files:
+    marks: 50
+  stdin_no_args:
+    marks: 50
+  stdin_with_arg:
+    marks: 50
+  large_file:
+    marks: 50
+  short_file:
+    marks: 50
+  long_line:
+    marks: 50
+  error_handling:
+    marks: 50
+  multiple_file_error_handling:
+    marks: 50

@@ -1,0 +1,10 @@
+FROM gcc:7
+
+WORKDIR /grader/testing/
+
+RUN seq 1 255 > seq_1_255.txt
+RUN seq 1 255000 > seq_1_255000.txt
+RUN seq 1 5 > seq_1_5.txt
+RUN for i in `seq 1 20`; do seq -s " " $i 25550 >> long_line_20_25550.txt; done
+
+COPY ["testing", "/grader/testing/"]
