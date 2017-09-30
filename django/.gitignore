@@ -3,3 +3,7 @@
 /submissions/
 /.cache/
 *.sqlite3
+/.coverage
+/coverage.xml
+/htmlcov/
+/reports/

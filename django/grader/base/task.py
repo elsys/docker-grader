@@ -17,7 +17,7 @@ class TaskStep:
         self.name = name
         self.config = config
 
-        self.marks = config['marks']
+        self.max_marks = config['max_marks']
 
     def run_preprocess(self, grading_runner, preprocess_kwargs):
         state = preprocess_kwargs['state']
@@ -56,10 +56,11 @@ class TaskStep:
     def grade(self, grading_runner, testing_runner,
               base_preprocess_kwargs):
         step_result = {
+            'broken': False,
             'fail': True,
             'continue': False,
             'marks': 0,
-            'max_marks': self.marks,
+            'max_marks': self.max_marks,
             'output_msg': 'Grading failed, please contact your teacher!',
         }
 
@@ -103,10 +104,11 @@ class TaskStep:
                 step_result['fail'] = False
                 step_result['continue'] = True
                 step_result['marks'] = (postprocess_result['grade'] *
-                                        self.marks // 100)
+                                        self.max_marks // 100)
 
             step_result['output_msg'] = postprocess_result['output_msg']
         except:
+            step_result['broken'] = True
             logger.exception('Uncaught exception while grading')
 
         return step_result
@@ -147,7 +149,7 @@ class Task:
 
         max_marks = 0
         for step in steps.values():
-            max_marks += step.config['marks']
+            max_marks += step.max_marks
 
         self.max_marks = max_marks
 
