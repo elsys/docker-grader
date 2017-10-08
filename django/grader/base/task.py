@@ -56,7 +56,7 @@ class TaskStep:
     def grade(self, grading_runner, testing_runner,
               base_preprocess_kwargs):
         step_result = {
-            'broken': False,
+            'broken': True,
             'fail': True,
             'continue': False,
             'marks': 0,
@@ -92,7 +92,9 @@ class TaskStep:
                     "You have non-ascii characters in your output. "
                     "You are probably reading/writing to memory, "
                     "which you don't control.")
-                raise
+                step_result['broken'] = False
+
+                return step_result
 
             postprocess_kwargs = testing_result.copy()
             postprocess_kwargs['state'] = state
@@ -107,8 +109,8 @@ class TaskStep:
                                         self.max_marks // 100)
 
             step_result['output_msg'] = postprocess_result['output_msg']
+            step_result['broken'] = False
         except:
-            step_result['broken'] = True
             logger.exception('Uncaught exception while grading')
 
         return step_result

@@ -1,0 +1,16 @@
+[run]
+branch = True
+data_file=reports/.coverage
+
+[report]
+show_missing=True
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+
+[html]
+directory=reports/coverage/html/
+
+[xml]
+output=reports/coverage/xml/coverage.xml
+
