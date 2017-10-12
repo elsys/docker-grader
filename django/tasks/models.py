@@ -2,6 +2,7 @@ import os
 import uuid
 
 from django.db import models
+from django.db import transaction
 from django.utils import timezone
 from django.conf import settings
 
@@ -18,6 +19,25 @@ class Task(models.Model):
 
     def get_task_dir(self):
         return os.path.join(settings.GRADER_SUBMISSIONS_DIR, self.slug)
+
+    @classmethod
+    def from_mem_task(cls, mem_task, slug):
+        with transaction.atomic():
+            task = Task.objects.create(
+                slug=slug,
+                grading_image=mem_task.grading_image,
+                testing_image=mem_task.testing_image)
+
+            order = 1
+            for step_name, mem_task_step in mem_task.steps.items():
+                TaskStep.objects.create(
+                    task=task,
+                    slug=mem_task_step.name,
+                    order=order,
+                    max_marks=mem_task_step.max_marks)
+                order += 1
+
+        return task
 
     def __str__(self):
         return self.slug
@@ -54,9 +74,6 @@ class TaskSubmission(models.Model):
     total_marks = models.IntegerField(default=0)
     broken = models.BooleanField(default=True)
 
-    def get_submission_path(self):
-        return os.path.join(self.task.get_task_dir(), str(self.uuid))
-
     def __str__(self):
         task_max_marks = self.task.max_marks
         if task_max_marks == 0:
@@ -67,10 +84,6 @@ class TaskSubmission(models.Model):
         return '{0!s}: {1!s} ({2:d}/{3:d}; {4:d}%)'.format(
             self.task, self.user.get_username(),
             self.total_marks, task_max_marks, percent)
-
-    def regrade(self):
-        from tasks import tasks
-        tasks.grade.delay(self.id)
 
 
 class TaskLog(models.Model):

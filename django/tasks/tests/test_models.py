@@ -1,8 +1,14 @@
+from collections import OrderedDict
+
 import pytest
 
 from django.utils import timezone
+from django.db import transaction
 from django.db.utils import IntegrityError
 from django.contrib.auth.models import User
+
+from grader.base.task import Task as MemTask
+from grader.base.task import TaskStep as MemTaskStep
 
 from tasks.models import Task
 from tasks.models import TaskStep
@@ -39,16 +45,50 @@ def test_task_default_description():
 
 @pytest.mark.django_db
 def test_task_duplicate_slug():
-    Task.objects.create(
+    task = Task.objects.create(
         slug='test', description='Some text',
         grading_image='grading_image', testing_image='testing_image')
 
-    with pytest.raises(IntegrityError) as excinfo:
+    with transaction.atomic(), pytest.raises(IntegrityError) as excinfo:
         Task.objects.create(
-            slug='test', description='Some text',
-            grading_image='grading_image', testing_image='testing_image')
+            slug='test', description='Some text 2',
+            grading_image='grading_image2', testing_image='testing_image2')
 
     assert '.slug' in str(excinfo.value)
+
+    db_task = Task.objects.get()
+    assert task == db_task
+
+
+@pytest.mark.django_db
+def test_task_mem_to_db_no_steps():
+    mem_task = MemTask('grading_image', 'testing_image', {})
+
+    task = Task.from_mem_task(mem_task, 'test_slug')
+    assert task.slug == 'test_slug'
+    assert task.grading_image == 'grading_image'
+    assert task.testing_image == 'testing_image'
+    assert task.description == ''
+    assert task.steps.count() == 0
+    assert task.submissions.count() == 0
+
+    db_task = Task.objects.get()
+    assert task == db_task
+
+
+@pytest.mark.django_db
+def test_task_mem_to_db_duplicate_slug():
+    mem_task = MemTask('grading_image', 'testing_image', {})
+
+    task = Task.from_mem_task(mem_task, 'test_slug')
+    db_task = Task.objects.get()
+    assert task == db_task
+
+    with pytest.raises(IntegrityError) as excinfo:
+        task = Task.from_mem_task(mem_task, 'test_slug')
+
+    assert '.slug' in str(excinfo.value)
+    assert Task.objects.get() == task
 
 
 @pytest.mark.django_db
@@ -78,15 +118,61 @@ def test_task_step_duplicate_slug():
         slug='test',
         grading_image='grading_image', testing_image='testing_image')
 
-    TaskStep.objects.create(
+    task_step = TaskStep.objects.create(
         task=task, slug='ts1', order=1, max_marks=20)
 
-    with pytest.raises(IntegrityError) as excinfo:
+    with transaction.atomic(), pytest.raises(IntegrityError) as excinfo:
         TaskStep.objects.create(
             task=task, slug='ts1', order=2, max_marks=40)
 
     assert '.slug' in str(excinfo.value)
     assert '.task_id' in str(excinfo.value)
+    assert TaskStep.objects.get() == task_step
+
+
+@pytest.mark.django_db
+def test_task_mem_to_db():
+    mem_task_step1 = MemTaskStep('ts1', {'max_marks': 0})
+    mem_task_step2 = MemTaskStep('ts2', {'max_marks': 50})
+    mem_task_steps = OrderedDict(
+        [('ts1', mem_task_step1), ('ts2', mem_task_step2)])
+
+    mem_task = MemTask('gi', 'ti', mem_task_steps)
+
+    task = Task.from_mem_task(mem_task, 'test_slug')
+    assert task.slug == 'test_slug'
+    assert task.grading_image == 'gi'
+    assert task.testing_image == 'ti'
+    assert task.description == ''
+    assert task.steps.count() == 2
+    assert task.submissions.count() == 0
+
+    db_task = Task.objects.get()
+    assert task == db_task
+
+    task_step1, task_step2 = task.steps.all()
+    assert task_step1.slug == 'ts1'
+    assert task_step1.max_marks == 0
+    assert task_step1.order == 1
+    assert task_step2.slug == 'ts2'
+    assert task_step2.max_marks == 50
+    assert task_step2.order == 2
+
+
+@pytest.mark.django_db
+def test_task_mem_to_db_duplicate_step_slug():
+    mem_task_step1 = MemTaskStep('ts1', {'max_marks': 0})
+    mem_task_step2 = MemTaskStep('ts1', {'max_marks': 50})
+    mem_task_steps = OrderedDict(
+        [('ts1', mem_task_step1), ('ts2', mem_task_step2)])
+
+    mem_task = MemTask('gi', 'ti', mem_task_steps)
+
+    with pytest.raises(IntegrityError) as excinfo:
+        Task.from_mem_task(mem_task, 'test_slug')
+
+    assert '.slug' in str(excinfo.value)
+    assert Task.objects.count() == 0
 
 
 @pytest.mark.django_db
