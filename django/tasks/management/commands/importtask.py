@@ -1,35 +1,24 @@
 from django.core.management.base import BaseCommand
-from tasks.models import Task, TaskStep
+
+from grader.base.task import Task as MemTask
+
+from tasks.models import Task
 
 
 class Command(BaseCommand):
-    help = 'Dumps task into file filename'
-    args = '<task-slug> <docker-image> <filename>'
+    help = 'Import test task from dir'
 
-    def handle(self, *args, **options):
-        inputs = []
-        outputs = []
+    def add_arguments(self, parser):
+        parser.add_argument('task_slug', type=str)
+        parser.add_argument('task_definition_dir', type=str)
 
-        with open(args[2], 'r') as infile:
-            currentBuffer = ""
+    def handle(self, task_slug, task_definition_dir, *args, **options):
+        self.stdout.write(
+            "Reading task definition from directory... ", ending='')
+        mem_task = MemTask.from_dir(task_definition_dir)
+        self.stdout.write(self.style.SUCCESS("Done."))
 
-            for line in infile:
-                if line.strip() == "#-----INPUT-TASK-STEP-----":
-                    if currentBuffer != "":
-                        outputs.append(currentBuffer)
-                    currentBuffer = ""
-                elif line.strip() == "#-----OUTPUT-TASK-STEP-----":
-                    if currentBuffer != "":
-                        inputs.append(currentBuffer)
-                    currentBuffer = ""
-                else:
-                    currentBuffer += line
-
-            if currentBuffer != "":
-                outputs.append(currentBuffer)
-
-        task = Task.objects.create(slug=args[0], docker_image=args[1])
-        for i, (input_code, output_code) in enumerate(zip(inputs, outputs)):
-            TaskStep.objects.create(order=i, task=task,
-                                    input_source=input_code,
-                                    output_source=output_code)
+        self.stdout.write(
+            "Importing task definition to database... ", ending='')
+        Task.from_mem_task(mem_task, task_slug)
+        self.stdout.write(self.style.SUCCESS("Done."))
