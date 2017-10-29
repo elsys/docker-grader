@@ -1,5 +1,3 @@
-import os
-
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -10,7 +8,6 @@ from django.http import JsonResponse
 
 from .models import Task
 from .models import TaskSubmission
-from .models import TaskLog
 
 from .forms import TaskForm
 
@@ -33,7 +30,8 @@ class TaskView(View):
     def post(self, request, task_id):
         form = self.form_class(request.POST, request.FILES)
         if form.is_valid():
-            self.make_submission(request.user, request.FILES['zip_file'])
+            TaskSubmission.objects.submit_submission(
+                self.task, request.user, form.cleaned_data['submission'])
             return HttpResponseRedirect(request.get_full_path())
 
         return self.display_page(request, form, status=400)
@@ -45,23 +43,6 @@ class TaskView(View):
             'task': self.task,
         }
         return render(request, self.template_name, context, status=status)
-
-    def make_submission(self, user, f):
-        task_dir = self.task.get_task_dir()
-        os.makedirs(task_dir, mode=0o2777, exist_ok=True)
-
-        submission = TaskSubmission.objects.create(
-            task=self.task, user=user)
-        file_dir = submission.get_submission_path()
-
-        with open(file_dir, 'wb+') as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
-
-        TaskLog.objects.create(
-            task_submission=submission, action=TaskLog.LOG_TYPE.SUBMITTED)
-
-        submission.regrade()
 
 
 class SubmissionsView(View):

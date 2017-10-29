@@ -1,5 +1,6 @@
 import os
 import uuid
+import shutil
 
 from django.db import models
 from django.db import transaction
@@ -66,13 +67,45 @@ class TaskStep(models.Model):
         unique_together = ('task', 'slug',)
 
 
+class TaskSubmissionManager(models.Manager):
+    def submit_submission(self, task, user, contents):
+        task_dir = task.get_task_dir()
+        os.makedirs(task_dir, mode=0o2777, exist_ok=True)
+
+        submission = self.model.objects.create(task=task, user=user)
+        file_path = submission.get_submission_path()
+
+        with open(file_path, 'wb+') as destination:
+            shutil.copyfileobj(contents, destination)
+
+        TaskLog.objects.create(
+            task_submission=submission, action=TaskLog.LOG_TYPE.SUBMITTED)
+
+        submission.grade()
+
+        return submission
+
+
 class TaskSubmission(models.Model):
+    objects = TaskSubmissionManager()
+
     task = models.ForeignKey(Task, related_name='submissions')
     user = models.ForeignKey(User, related_name='submissions')
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     max_marks = models.IntegerField()
     total_marks = models.IntegerField(default=0)
     broken = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        self.max_marks = self.task.max_marks
+        return super().save(*args, **kwargs)
+
+    def get_submission_path(self):
+        return os.path.join(self.task.get_task_dir(), str(self.uuid))
+
+    def grade(self, regrade=False):
+        from tasks import tasks
+        tasks.grade.delay(self.id)
 
     def __str__(self):
         task_max_marks = self.task.max_marks

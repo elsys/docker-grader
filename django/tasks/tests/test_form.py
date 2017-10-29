@@ -34,7 +34,7 @@ def test_valid_file_upload(admin_client):
     zip_file = SimpleUploadedFile(
         "task1.zip", data, content_type="application/zip")
 
-    response = admin_client.post(url, {'zip_file': zip_file})
+    response = admin_client.post(url, {'submission': zip_file})
     assert response.status_code == 302
     assert urlparse(response.url).path == url
 

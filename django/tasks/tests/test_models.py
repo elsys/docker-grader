@@ -1,11 +1,14 @@
+import os
 from collections import OrderedDict
 
 import pytest
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from django.db import transaction
 from django.db.utils import IntegrityError
 from django.contrib.auth.models import User
+from django.test.utils import override_settings
 
 from grader.base.task import Task as MemTask
 from grader.base.task import TaskStep as MemTaskStep
@@ -17,6 +20,7 @@ from tasks.models import TaskLog
 
 
 @pytest.mark.django_db
+@override_settings(GRADER_SUBMISSIONS_DIR='/tmp/test/')
 def test_task():
     task = Task.objects.create(
         slug='test', description='Some text',
@@ -29,6 +33,7 @@ def test_task():
     assert db_task.grading_image == 'grading_image'
     assert db_task.testing_image == 'testing_image'
     assert db_task.max_marks == 0
+    assert db_task.get_task_dir() == '/tmp/test/test'
     assert str(db_task) == 'test'
 
 
@@ -176,6 +181,64 @@ def test_task_mem_to_db_duplicate_step_slug():
 
 
 @pytest.mark.django_db
+def test_submit_task_submission(monkeypatch, tmpdir):
+    def grade(*args, **kwargs):
+        grade.last_args = args
+        grade.last_kwargs = kwargs
+
+    monkeypatch.setattr(
+        'tasks.models.TaskSubmission.grade', grade)
+
+    task = Task.objects.create(
+        slug='test',
+        grading_image='grading_image', testing_image='testing_image')
+    user = User.objects.create_user(username='user', email='user@localhost')
+    content = SimpleUploadedFile('test.c', b'#include')
+
+    @override_settings(GRADER_SUBMISSIONS_DIR=tmpdir.strpath)
+    def inner():
+        return TaskSubmission.objects.submit_submission(
+            task, user, content)
+
+    task_submission = inner()
+
+    db_task_submission = TaskSubmission.objects.get()
+    assert task_submission == db_task_submission
+    assert db_task_submission.task == task
+    assert db_task_submission.user == user
+    assert db_task_submission.max_marks == 0
+    assert db_task_submission.total_marks == 0
+    assert db_task_submission.broken is True
+
+    assert task.submissions.count() == 1
+    assert task.submissions.get() == db_task_submission
+
+    assert user.submissions.count() == 1
+    assert user.submissions.get() == db_task_submission
+
+    assert os.path.isdir(os.path.join(tmpdir.strpath, 'test'))
+    with open(os.path.join(
+            tmpdir.strpath, 'test', str(task_submission.uuid)), 'rb') as f:
+        assert f.read() == b'#include'
+
+    assert db_task_submission.log.count() == 1
+    task_log = db_task_submission.log.get()
+    now = timezone.now()
+
+    assert task_log.task_submission == db_task_submission
+    assert task_log.action == TaskLog.LOG_TYPE.SUBMITTED
+    assert task_log.task_step is None
+    assert (now - task_log.date).total_seconds() < 60
+    assert task_log.marks is None
+    assert task_log.max_marks is None
+    assert task_log.message == ''
+
+    assert grade.last_args == (db_task_submission,)
+    assert len(grade.last_kwargs) == 0
+
+
+@pytest.mark.django_db
+@override_settings(GRADER_SUBMISSIONS_DIR='/tmp/test/')
 def test_task_submission():
     task = Task.objects.create(
         slug='test',
@@ -187,8 +250,7 @@ def test_task_submission():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, total_marks=10,
-        broken=False)
+        task=task, user=user, total_marks=10, broken=False)
 
     db_task_submission = TaskSubmission.objects.get()
     assert task_submission == db_task_submission
@@ -204,6 +266,10 @@ def test_task_submission():
     assert user.submissions.count() == 1
     assert user.submissions.get() == db_task_submission
 
+    assert db_task_submission.get_submission_path().startswith(
+        '/tmp/test/test/')
+    assert str(db_task_submission.uuid) in \
+        db_task_submission.get_submission_path()
     assert str(db_task_submission) == str(task) + ': user (10/20; 50%)'
 
 
@@ -216,11 +282,11 @@ def test_task_submission_no_steps():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=0, total_marks=0,
-        broken=False)
+        task=task, user=user, total_marks=0, broken=False)
 
     db_task_submission = TaskSubmission.objects.get()
     assert task_submission == db_task_submission
+    assert db_task_submission.max_marks == 0
     assert str(db_task_submission) == str(task) + ': user (0/0; 100%)'
 
 
@@ -233,10 +299,11 @@ def test_task_submission_default_total_marks():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, broken=False)
+        task=task, user=user, broken=False)
 
     db_task_submission = TaskSubmission.objects.get()
     assert task_submission == db_task_submission
+    assert db_task_submission.max_marks == 0
     assert db_task_submission.total_marks == 0
 
 
@@ -249,10 +316,11 @@ def test_task_submission_default_broken():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, total_marks=0)
+        task=task, user=user, total_marks=0)
 
     db_task_submission = TaskSubmission.objects.get()
     assert task_submission == db_task_submission
+    assert db_task_submission.max_marks == 0
     assert db_task_submission.broken is True
 
 
@@ -265,8 +333,7 @@ def test_task_log_submitted():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, total_marks=10,
-        broken=False)
+        task=task, user=user, total_marks=10, broken=False)
 
     task_log = TaskLog.objects.create(
         task_submission=task_submission, action=TaskLog.LOG_TYPE.SUBMITTED,
@@ -299,8 +366,7 @@ def test_task_log_grading_started():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, total_marks=10,
-        broken=False)
+        task=task, user=user, total_marks=10, broken=False)
 
     task_log = TaskLog.objects.create(
         task_submission=task_submission,
@@ -327,8 +393,7 @@ def test_task_log_regrading_started():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, total_marks=10,
-        broken=False)
+        task=task, user=user, total_marks=10, broken=False)
 
     task_log = TaskLog.objects.create(
         task_submission=task_submission,
@@ -358,8 +423,7 @@ def test_task_log_succeeded():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, total_marks=10,
-        broken=False)
+        task=task, user=user, total_marks=10, broken=False)
 
     task_log = TaskLog.objects.create(
         task_submission=task_submission,
@@ -395,8 +459,7 @@ def test_task_log_partially_succeeded():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, total_marks=10,
-        broken=False)
+        task=task, user=user, total_marks=10, broken=False)
 
     task_log = TaskLog.objects.create(
         task_submission=task_submission,
@@ -432,8 +495,7 @@ def test_task_log_failed():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, total_marks=10,
-        broken=False)
+        task=task, user=user, total_marks=10, broken=False)
 
     task_log = TaskLog.objects.create(
         task_submission=task_submission,
@@ -469,8 +531,7 @@ def test_task_log_broke():
     user = User.objects.create_user(username='user', email='user@localhost')
 
     task_submission = TaskSubmission.objects.create(
-        task=task, user=user, max_marks=20, total_marks=10,
-        broken=False)
+        task=task, user=user, total_marks=10, broken=False)
 
     task_log = TaskLog.objects.create(
         task_submission=task_submission,
