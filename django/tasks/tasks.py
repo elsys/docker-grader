@@ -24,6 +24,7 @@ def grade(submission_id):
             try:
                 input_result = rpc.prepare_input_command(step.input_source, state)
                 execution_result = runner.exec_step(input_result["command"])
+                print('d0', input_result["command"], execution_result)
                 output_result = rpc.parse_output(step.output_source, input_result["state"], execution_result, "", 0)
                 state = output_result["state"]
                 grade = grade + output_result["grade"]
@@ -74,8 +75,8 @@ class TaskRunner(DockerRunner):
                 binds=[input_file + ":/mnt/input"],
                 privileged=False,
                 network_mode='none',
-                mem_limit="100M",
-                memswap_limit="100M",
+                mem_limit="200M",
+                memswap_limit="200M",
                 shm_size="100M",
                 kernel_memory="50M",
                 pids_limit=100,
