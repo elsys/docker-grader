@@ -12,9 +12,11 @@ from django.http import JsonResponse
 from django.utils.encoding import smart_str
 from django.utils.decorators import method_decorator
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 
-from tasks.models import Task, TaskSubmission
+from tasks.models import Task, TaskSubmission, TaskLog
 from django.template.defaulttags import register
+from datetime import datetime
 
 
 @register.filter
@@ -26,6 +28,23 @@ def get_submission_uri_from_path(path):
     base = urljoin(settings.STATIC_URL, 'submissions/')
     return urljoin(base,
                    os.path.relpath(path, settings.GRADER_SUBMISSIONS_DIR))
+
+
+@login_required
+def download_mine(request, submission_id):
+    submission = TaskSubmission.objects.get(pk=submission_id)
+    date = submission.log.filter(action=TaskLog.LOG_TYPE.SUBMITTED).get().date
+    limit = datetime(2018, 4, 13, 0, 0, 0, tzinfo=date.tzinfo)
+    if submission.user != request.user or date > limit:
+        return HttpResponse('Unauthorized', status=401)
+    file_name = submission.task.slug + "_" + submission.user.username + "_" + submission_id
+    path = smart_str(submission.get_submission_path())
+
+    response = HttpResponse(content_type='application/force-download')
+    response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(file_name)
+    response['X-Sendfile'] = path
+    response['X-Accel-Redirect'] = get_submission_uri_from_path(path)
+    return response
 
 
 @staff_member_required

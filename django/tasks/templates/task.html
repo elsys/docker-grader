@@ -107,7 +107,7 @@
         </script>
     </head>
     <body>
-        {{ task.description }}
+        <pre>{{ task.description }}</pre>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div>
