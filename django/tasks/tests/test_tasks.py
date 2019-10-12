@@ -10,7 +10,8 @@ from shutil import copyfile
 import xmlrpc.client
 
 
-HELLO_C_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "hello.c")
+HELLO_C_PATH = os.path.join(os.path.dirname(
+    os.path.realpath(__file__)), 'hello.c')
 
 
 def test_docker_gcc():
@@ -32,7 +33,8 @@ def test_docker_python_rpc():
     with tasks.GradingStepsRunner():
         time.sleep(1)
         s = xmlrpc.client.ServerProxy('http://localhost:7799')
-        result = s.parse_output(TEST_OUTPUT_PARSING_SOURCE, 2, "stdout".encode(), "stderr", 15)
+        result = s.parse_output(
+            TEST_OUTPUT_PARSING_SOURCE, 2, "stdout".encode(), "stderr", 15)
         assert result["state"] == 60
         assert result["grade"] == 30
         assert result["output_msg"] == "blabla"
@@ -49,7 +51,8 @@ def generate_task_submission(db):
                             order=1)
     TaskStep.objects.create(task=task,
                             input_source="command = \"./a.out\"",
-                            output_source="state = stdout.decode(\"utf8\"); grade=150",
+                            output_source='state = stdout.decode("utf8"); '
+                                          'grade=150',
                             order=2)
     taskSubmission = TaskSubmission.objects.create(task=task, user=user)
 

@@ -38,7 +38,8 @@ class LTIAuthBackend(ModelBackend):
         request_key = request.POST.get('oauth_consumer_key', None)
 
         if request_key is None:
-            logger.error("Request doesn't contain an oauth_consumer_key; can't continue.")
+            logger.error("Request doesn't contain an oauth_consumer_key; "
+                         "can't continue.")
             return None
 
         if not settings.LTI_OAUTH_CREDENTIALS:
@@ -51,7 +52,8 @@ class LTIAuthBackend(ModelBackend):
 
         user = None
 
-        # Retrieve username from LTI parameter or default to an overridable function return value
+        # Retrieve username from LTI parameter or
+        # default to an overridable function return value
         username = tool_provider.ext_user_username
 
         email = tool_provider.lis_person_contact_email_primary

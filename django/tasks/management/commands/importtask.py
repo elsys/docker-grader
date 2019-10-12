@@ -1,10 +1,10 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from tasks.models import Task, TaskStep
-from lxml import etree
+
 
 class Command(BaseCommand):
     help = 'Dumps task into file filename'
-    args = '<task-slug> <docker-image> <filename>' 
+    args = '<task-slug> <docker-image> <filename>'
 
     def handle(self, *args, **options):
         inputs = []
@@ -12,7 +12,6 @@ class Command(BaseCommand):
 
         with open(args[2], 'r') as infile:
             currentBuffer = ""
-
 
             for line in infile:
                 if line.strip() == "#-----INPUT-TASK-STEP-----":
@@ -31,5 +30,6 @@ class Command(BaseCommand):
 
         task = Task.objects.create(slug=args[0], docker_image=args[1])
         for i, (input_code, output_code) in enumerate(zip(inputs, outputs)):
-            TaskStep.objects.create(order=i, task=task, 
-                                    input_source=input_code, output_source=output_code)
+            TaskStep.objects.create(order=i, task=task,
+                                    input_source=input_code,
+                                    output_source=output_code)

@@ -41,7 +41,8 @@ MIDDLEWARE_CLASSES = (
     'authentication.middleware.LTIAuthMiddleware'
 )
 
-AUTHENTICATION_BACKENDS = ['authentication.backends.LTIAuthBackend', 'django.contrib.auth.backends.ModelBackend']
+AUTHENTICATION_BACKENDS = ['authentication.backends.LTIAuthBackend',
+                           'django.contrib.auth.backends.ModelBackend']
 
 ROOT_URLCONF = 'grader.urls'
 

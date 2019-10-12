@@ -1,13 +1,13 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from tasks.models import Task
-from lxml import etree
+
 
 class Command(BaseCommand):
     help = 'Dumps task into file filename'
     args = '<task-slug> <filename>'
 
     def prettify_source(self, source):
-        return "\n" + source.replace("\r\n","\n").strip() + "\n"
+        return '\n' + source.replace('\r\n', '\n').strip() + '\n'
 
     def handle(self, *args, **options):
         task = Task.objects.get(slug=args[0])

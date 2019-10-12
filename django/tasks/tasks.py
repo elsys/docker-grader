@@ -4,7 +4,7 @@ import os
 import xmlrpc.client
 import time
 from celery import shared_task
-from docker import Client
+from docker import APIClient
 from tasks.models import TaskSubmission, TaskLog
 from django.conf import settings
 from celery.exceptions import SoftTimeLimitExceeded
@@ -13,19 +13,25 @@ from celery.exceptions import SoftTimeLimitExceeded
 @shared_task
 def grade(submission_id):
     submission = TaskSubmission.objects.get(pk=submission_id)
+    docker_image = submission.task.docker_image
     state = "/mnt/input"
     grade = 0
 
-    with GradingStepsRunner(), TaskRunner(submission.task.docker_image, submission.get_submission_path()) as runner:
+    with GradingStepsRunner(), \
+        TaskRunner(docker_image,
+                   submission.get_submission_path()) as runner:
         rpc = xmlrpc.client.ServerProxy('http://localhost:7799')
         time.sleep(2)
 
         for step in submission.task.steps.order_by("order"):
             try:
-                input_result = rpc.prepare_input_command(step.input_source, state)
+                input_result = rpc.prepare_input_command(
+                    step.input_source, state)
                 execution_result = runner.exec_step(input_result["command"])
                 print('d0', input_result["command"], execution_result)
-                output_result = rpc.parse_output(step.output_source, input_result["state"], execution_result, "", 0)
+                output_result = rpc.parse_output(
+                    step.output_source, input_result["state"],
+                    execution_result, '', 0)
                 state = output_result["state"]
                 grade = grade + output_result["grade"]
                 message = output_result["output_msg"]
@@ -49,7 +55,7 @@ def grade(submission_id):
 
 class DockerRunner:
     def __init__(self):
-        self.cli = Client(base_url="unix://var/run/docker.sock")
+        self.cli = APIClient(base_url="unix://var/run/docker.sock")
 
     def stop(self):
         self.cli.kill(self.container)

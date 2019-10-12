@@ -42,7 +42,8 @@ class TaskSubmission(models.Model):
         return os.path.join(self.task.get_task_dir(), str(self.uuid))
 
     def __str__(self):
-        return self.user.get_username() + ': ' + str(self.task) + ' (' + str(self.grade) + ')'
+        return (self.user.get_username() + ': ' +
+                str(self.task) + ' (' + str(self.grade) + ')')
 
     def regrade(self):
         from tasks import tasks
